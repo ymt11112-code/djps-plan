@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>課程計畫 HTML 檢視與連結設定工具</title>
+    
+    <!-- 引入 Tailwind CSS 用於介面美化 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Noto Sans TC', sans-serif; }
+        /* iframe 隱藏預設邊框 */
+        iframe { border: none; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+
+    <!-- 控制面板 -->
+    <div class="bg-white shadow-md z-10">
+        <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+            <h1 class="text-2xl font-bold text-gray-800 mb-4">📄 課程計畫 HTML 檢視與美化工具</h1>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 bg-blue-50 p-5 rounded-lg border border-blue-100">
+                
+                <!-- 步驟 1：連結設定 -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">
+                        1. 設定基礎網址 (Google Apps Script)
+                    </label>
+                    <input type="text" id="baseUrl" 
+                           placeholder="例如: https://script.google.com/.../exec" 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 shadow-sm text-sm">
+                </div>
+
+                <!-- 步驟 2：檔案上傳 -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">
+                        2. 上傳從 Word 存出的網頁檔
+                    </label>
+                    <div class="flex items-center gap-2">
+                        <input type="file" id="fileInput" accept=".htm,.html" 
+                               class="block w-full text-sm text-gray-500
+                                      file:mr-2 file:py-2 file:px-4
+                                      file:rounded-md file:border-0
+                                      file:text-sm file:font-semibold
+                                      file:bg-blue-600 file:text-white
+                                      hover:file:bg-blue-700 cursor-pointer">
+                        <select id="encoding" class="border border-gray-300 text-sm rounded-md px-2 py-2">
+                            <option value="big5">Big5</option>
+                            <option value="utf-8">UTF-8</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 步驟 3：樣式選擇與執行 -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">
+                        3. 選擇表格美化風格
+                    </label>
+                    <div class="flex items-center gap-2">
+                        <select id="themeSelect" class="w-full border border-gray-300 text-sm rounded-md px-3 py-2">
+                            <option value="blue">🟦 專業藍 (推薦)</option>
+                            <option value="green">🟩 典雅綠</option>
+                            <option value="orange">🟧 溫暖橘</option>
+                            <option value="none">⚪ 保留 Word 原始樣式</option>
+                        </select>
+                        <button id="renderBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-md shadow transition duration-150 whitespace-nowrap">
+                            套用並顯示
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- 動作面板 (預設隱藏，處理完成後顯示) -->
+            <div id="actionPanel" class="mt-4 hidden flex items-center gap-4 bg-green-50 p-4 rounded-md border border-green-200">
+                <span class="text-green-800 font-medium flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    處理成功！您可以：
+                </span>
+                <!-- 另開視窗連結 -->
+                <a id="openTabBtn" href="#" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2 px-4 rounded shadow transition duration-150">
+                    ↗️ 另開視窗全螢幕瀏覽
+                </a>
+                <!-- 下載檔案連結 -->
+                <a id="downloadBtn" href="#" download="美化後課程計畫.html" class="bg-gray-800 hover:bg-gray-900 text-white text-sm font-bold py-2 px-4 rounded shadow transition duration-150">
+                    💾 下載處理後的網頁 (供上傳至伺服器)
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 預覽畫面區 -->
+    <div class="flex-grow w-full relative bg-white">
+        <!-- 尚未上傳時的提示 -->
+        <div id="placeholder" class="absolute inset-0 flex items-center justify-center text-gray-400 flex-col">
+            <svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            <p class="text-lg">請完成上方三個步驟，並點擊「套用並顯示」</p>
+        </div>
+        
+        <iframe id="previewFrame" class="w-full h-full absolute inset-0 hidden"></iframe>
+    </div>
+
+    <script>
+        // 定義不同風格的 CSS 注入代碼，加入 :not(.theme-header-cell) 避免斑馬紋覆蓋標題深色
+        const themes = {
+            blue: `
+                body { font-family: 'Noto Sans TC', sans-serif !important; padding: 20px; background: #f4f7f6; color: #333; }
+                table { width: 100% !important; border-collapse: collapse !important; background: #fff; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; }
+                td, th { padding: 12px 16px !important; border: 1px solid #e5e7eb !important; text-align: left; }
+                tr:first-child td, thead td, th { background-color: #1e3a8a !important; color: #ffffff !important; font-weight: bold !important; }
+                tr:first-child p, tr:first-child span { color: #ffffff !important; }
+                tr:nth-child(even):not(:first-child) td:not(.theme-header-cell) { background-color: #f8fafc !important; }
+                tr:hover:not(:first-child) td:not(.theme-header-cell) { background-color: #eff6ff !important; }
+                a { color: #2563eb !important; text-decoration: none !important; font-weight: bold !important; }
+                a:hover { text-decoration: underline !important; color: #1d4ed8 !important; }
+                
+                td.theme-header-cell { background-color: #1e3a8a !important; color: #ffffff !important; font-weight: bold !important; }
+                td.theme-header-cell * { color: #ffffff !important; }
+            `,
+            green: `
+                body { font-family: 'Noto Sans TC', sans-serif !important; padding: 20px; background: #f0fdf4; color: #333; }
+                table { width: 100% !important; border-collapse: collapse !important; background: #fff; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+                td, th { padding: 12px 16px !important; border: 1px solid #d1fae5 !important; text-align: left; }
+                tr:first-child td, thead td, th { background-color: #065f46 !important; color: #ffffff !important; font-weight: bold !important; border-color: #065f46 !important; }
+                tr:first-child p, tr:first-child span { color: #ffffff !important; }
+                tr:nth-child(even):not(:first-child) td:not(.theme-header-cell) { background-color: #ecfdf5 !important; }
+                tr:hover:not(:first-child) td:not(.theme-header-cell) { background-color: #d1fae5 !important; }
+                a { color: #059669 !important; text-decoration: none !important; font-weight: bold !important; }
+                a:hover { text-decoration: underline !important; color: #047857 !important; }
+                
+                td.theme-header-cell { background-color: #065f46 !important; color: #ffffff !important; font-weight: bold !important; border-color: #065f46 !important; }
+                td.theme-header-cell * { color: #ffffff !important; }
+            `,
+            orange: `
+                body { font-family: 'Noto Sans TC', sans-serif !important; padding: 20px; background: #fff7ed; color: #333; }
+                table { width: 100% !important; border-collapse: collapse !important; background: #fff; margin-bottom: 20px; border: 2px solid #fdba74 !important; }
+                td, th { padding: 12px 16px !important; border: 1px solid #fed7aa !important; text-align: left; }
+                tr:first-child td, thead td, th { background-color: #c2410c !important; color: #ffffff !important; font-weight: bold !important; }
+                tr:first-child p, tr:first-child span { color: #ffffff !important; }
+                tr:nth-child(even):not(:first-child) td:not(.theme-header-cell) { background-color: #ffedd5 !important; }
+                tr:hover:not(:first-child) td:not(.theme-header-cell) { background-color: #fed7aa !important; }
+                a { color: #ea580c !important; text-decoration: none !important; font-weight: bold !important; }
+                a:hover { text-decoration: underline !important; color: #c2410c !important; }
+                
+                td.theme-header-cell { background-color: #c2410c !important; color: #ffffff !important; font-weight: bold !important; }
+                td.theme-header-cell * { color: #ffffff !important; }
+            `
+        };
+
+        // 保存前一個產生的 Blob URL (為了釋放記憶體)
+        let previousObjectUrl = null;
+
+        document.getElementById('renderBtn').addEventListener('click', () => {
+            const fileInput = document.getElementById('fileInput');
+            let rawBaseUrl = document.getElementById('baseUrl').value.trim();
+            const encoding = document.getElementById('encoding').value;
+            const theme = document.getElementById('themeSelect').value;
+            
+            const iframe = document.getElementById('previewFrame');
+            const placeholder = document.getElementById('placeholder');
+            const actionPanel = document.getElementById('actionPanel');
+
+            if (fileInput.files.length === 0) {
+                alert('請先選擇 .htm 或 .html 檔案！');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            // 清理網址：如果使用者連同 ?folder=&file= 一起複製貼上，我們先截斷它
+            let cleanBaseUrl = rawBaseUrl;
+            if (cleanBaseUrl.includes('?')) {
+                cleanBaseUrl = cleanBaseUrl.split('?')[0];
+            }
+
+            reader.onload = function(e) {
+                const htmlContent = e.target.result;
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlContent, 'text/html');
+
+                // 1. 處理所有超連結 (套用 Google Apps Script 查詢參數邏輯)
+                const links = doc.querySelectorAll('a');
+                links.forEach(link => {
+                    const href = link.getAttribute('href');
+                    
+                    // 排除絕對網址、信箱、錨點等不需要轉換的連結
+                    if (href && !href.startsWith('http') && !href.startsWith('mailto:') && !href.startsWith('#') && !href.startsWith('data:')) {
+                        
+                        if (cleanBaseUrl) {
+                            // 將路徑中的反斜線 \ 統一換成正斜線 / (防止 Word 產生 Windows 風格路徑)
+                            let normalizedHref = href.replace(/\\/g, '/');
+                            
+                            // 先嘗試解碼，以免雙重編碼
+                            let decodedHref = normalizedHref;
+                            try { decodedHref = decodeURIComponent(normalizedHref); } catch(e) {}
+                            
+                            // 拆解路徑與檔名
+                            let parts = decodedHref.split('/');
+                            let fileName = parts.pop(); // 陣列最後一個元素一定是檔名
+                            let folderName = parts.join('/'); // 剩餘的組合起來就是資料夾 (如果沒有資料夾則為空字串)
+                            
+                            // 組合新的 GAS 網址
+                            let newHref = cleanBaseUrl + '?';
+                            if (folderName) {
+                                newHref += 'folder=' + encodeURIComponent(folderName) + '&';
+                            }
+                            newHref += 'file=' + encodeURIComponent(fileName);
+                            
+                            link.setAttribute('href', newHref);
+                        }
+                        // 強制另開視窗
+                        link.setAttribute('target', '_blank');
+                    }
+                });
+
+                // 2. 注入自訂字體 (Google Noto Sans TC)
+                if (!doc.head.querySelector('link[href*="fonts.googleapis.com"]')) {
+                    const fontLink = doc.createElement('link');
+                    fontLink.rel = 'stylesheet';
+                    fontLink.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap';
+                    doc.head.appendChild(fontLink);
+                }
+
+                // 3. 注入美化 CSS 與表格欄位智慧分析
+                if (theme !== 'none') {
+                    // 清除 Word 背景色，以免影響樣式套用
+                    doc.querySelectorAll('td, th, tr').forEach(el => {
+                        el.removeAttribute('bgcolor');
+                        if (el.style) {
+                            el.style.backgroundColor = '';
+                            el.style.background = '';
+                        }
+                    });
+                    
+                    const styleTag = doc.createElement('style');
+                    styleTag.innerHTML = themes[theme];
+                    doc.head.appendChild(styleTag);
+
+                    // --- A 到 L 開頭的欄位自動變深色 ---
+                    const tables = doc.querySelectorAll('table');
+                    tables.forEach(table => {
+                        const rows = table.querySelectorAll('tr');
+                        
+                        rows.forEach((row, i) => {
+                            if (i === 0) return; // 第一列已有 CSS 預設為深色，不需另外處理
+
+                            for (let j = 0; j < row.cells.length; j++) {
+                                let cell = row.cells[j];
+                                if (!cell) continue;
+
+                                let rawText = cell.textContent || "";
+                                
+                                // 找尋字串中第一個有效文字 (加入數字，確保 1A, 2B 這種數字開頭的項目不會被當成英文字母開頭)
+                                let match = rawText.match(/[0-9\uFF10-\uFF19a-zA-Z\u4E00-\u9FA5\uFF21-\uFF3A\uFF41-\uFF5A]/);
+                                
+                                if (match) {
+                                    let firstChar = match[0];
+                                    let index = match.index;
+                                    
+                                    // 判斷是否為英文字母
+                                    let isLetter = /^[a-zA-Z\uFF21-\uFF3A\uFF41-\uFF5A]$/.test(firstChar);
+                                    
+                                    if (isLetter) {
+                                        let checkChar = firstChar.toUpperCase();
+                                        if (checkChar >= '\uFF21' && checkChar <= '\uFF3A') {
+                                            checkChar = String.fromCharCode(checkChar.charCodeAt(0) - 0xFEE0);
+                                        }
+
+                                        // 關鍵邏輯：將大寫字母範圍恢復設定為 A 到 L，涵蓋所有主要標題，G 也是深色。
+                                        if (checkChar >= 'A' && checkChar <= 'L') {
+                                            let restText = rawText.substring(index + 1);
+                                            let trimmedRest = restText.trim();
+                                            
+                                            // 排除子項目 (例如 f-1, F-2, g-1 等)，讓它們維持一般斑馬紋
+                                            if (/^[-－_.]\s*\d/.test(trimmedRest)) {
+                                                continue;
+                                            }
+
+                                            // 排除「化」字，例如避免 "E化教學" 被誤判
+                                            if (/^\u5316/.test(trimmedRest)) {
+                                                continue; 
+                                            }
+                                            
+                                            let isTitle = false;
+                                            
+                                            if (trimmedRest.length === 0) {
+                                                isTitle = true;
+                                            } else {
+                                                // 如果字母後方緊接的是「非英文/非數字」(例如是中文或符號)，就代表它是「標題」而不是普通單字
+                                                let nextCharMatch = restText.match(/[^\s\u2000-\u206F\uFEFF\u3000\xA0]/);
+                                                if (nextCharMatch) {
+                                                    let nextChar = nextCharMatch[0];
+                                                    if (!/^[a-zA-Z0-9\uFF21-\uFF3A\uFF41-\uFF5A\uFF10-\uFF19]$/.test(nextChar)) {
+                                                        isTitle = true;
+                                                    }
+                                                } else {
+                                                    isTitle = true;
+                                                }
+                                            }
+
+                                            // 符合 A~L 的標題條件，設定深色 class
+                                            if (isTitle && rawText.length < 200) {
+                                                cell.classList.add('theme-header-cell');
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    });
+                }
+
+                // 4. 將修改後的 HTML 轉回字串
+                const metaCharset = doc.createElement('meta');
+                metaCharset.setAttribute('charset', 'UTF-8');
+                doc.head.insertBefore(metaCharset, doc.head.firstChild);
+                
+                const finalHtmlString = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
+                
+                // 5. 更新 iframe 預覽
+                iframe.srcdoc = finalHtmlString;
+                placeholder.classList.add('hidden');
+                iframe.classList.remove('hidden');
+
+                // 6. 產生 Blob URL 以供「直接瀏覽」與「下載」
+                if (previousObjectUrl) {
+                    URL.revokeObjectURL(previousObjectUrl);
+                }
+                const blob = new Blob([finalHtmlString], { type: 'text/html;charset=utf-8' });
+                const objectUrl = URL.createObjectURL(blob);
+                previousObjectUrl = objectUrl;
+
+                // 更新按鈕連結並顯示控制面板
+                const openBtn = document.getElementById('openTabBtn');
+                const dlBtn = document.getElementById('downloadBtn');
+                
+                openBtn.href = objectUrl;
+                dlBtn.href = objectUrl;
+                
+                actionPanel.classList.remove('hidden');
+            };
+
+            // 讀取檔案
+            reader.readAsText(file, encoding);
+        });
+    </script>
+</body>
+</html>
