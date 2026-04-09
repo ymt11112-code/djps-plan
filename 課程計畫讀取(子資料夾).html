@@ -20,8 +20,14 @@
     <!-- 控制面板 -->
     <div class="bg-white shadow-md z-10">
         <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
-            <h1 class="text-2xl font-bold text-gray-800 mb-4">📄 課程計畫 HTML 檢視與美化工具</h1>
-            
+            <div class="flex items-center justify-between mb-3">
+                <h1 class="text-2xl font-bold text-gray-800">📄 課程計畫 HTML 檢視與美化工具</h1>
+                <button id="toggleSettingsBtn" class="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-md transition-colors">
+                    <span id="toggleArrow" class="inline-block transition-transform duration-200 text-xs">▼</span>
+                    <span id="toggleLabel">收合設定</span>
+                </button>
+            </div>
+            <div id="settingsPanel">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 bg-blue-50 p-5 rounded-lg border border-blue-100">
                 
                 <!-- 步驟 1：連結設定 -->
@@ -82,6 +88,7 @@
                 <input type="text" id="titleInput" placeholder="選擇檔案後自動讀取原始標題..."
                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 shadow-sm text-sm">
             </div>
+            </div><!-- /settingsPanel -->
 
             <!-- 動作面板 (預設隱藏，處理完成後顯示) -->
             <div id="actionPanel" class="mt-4 hidden flex items-center gap-4 bg-green-50 p-4 rounded-md border border-green-200">
@@ -98,11 +105,19 @@
                     💾 下載處理後的網頁 (供上傳至伺服器)
                 </a>
                 <!-- 字型大小控制 -->
-                <div class="ml-auto flex items-center gap-2 border-l border-green-300 pl-4">
-                    <span class="text-gray-600 text-sm font-medium whitespace-nowrap">字型大小：</span>
-                    <button id="fontDecBtn" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-800 font-bold py-1 px-3 rounded shadow-sm">A－</button>
-                    <span id="fontSizeDisplay" class="text-sm font-mono w-14 text-center border border-gray-200 bg-white rounded py-1">16px</span>
-                    <button id="fontIncBtn" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-800 font-bold py-1 px-3 rounded shadow-sm">A＋</button>
+                <div class="ml-auto flex flex-col gap-1.5 border-l border-green-300 pl-4">
+                    <div class="flex items-center gap-2">
+                        <span class="text-gray-600 text-xs font-medium w-8 shrink-0">標題：</span>
+                        <button id="headingDecBtn" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-800 font-bold py-0.5 px-2.5 rounded shadow-sm text-sm">A－</button>
+                        <span id="headingSizeDisplay" class="text-xs font-mono w-12 text-center border border-gray-200 bg-white rounded py-0.5">16px</span>
+                        <button id="headingIncBtn" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-800 font-bold py-0.5 px-2.5 rounded shadow-sm text-sm">A＋</button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-gray-600 text-xs font-medium w-8 shrink-0">內文：</span>
+                        <button id="bodyDecBtn" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-800 font-bold py-0.5 px-2.5 rounded shadow-sm text-sm">A－</button>
+                        <span id="bodySizeDisplay" class="text-xs font-mono w-12 text-center border border-gray-200 bg-white rounded py-0.5">14px</span>
+                        <button id="bodyIncBtn" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-800 font-bold py-0.5 px-2.5 rounded shadow-sm text-sm">A＋</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -334,6 +349,15 @@
                 const customTitle = document.getElementById('titleInput').value.trim();
                 if (customTitle) doc.title = customTitle;
 
+                // 4b. 注入字型大小樣式（標題 & 內文），寫入輸出 HTML
+                const fontSizeStyle = doc.createElement('style');
+                fontSizeStyle.id = '__font-ctrl__';
+                fontSizeStyle.innerHTML = `
+                    th, tr:first-child td, td.theme-header-cell, h1, h2, h3, h4, h5, h6 { font-size: ${headingFontSize}px !important; }
+                    td:not(.theme-header-cell), p, li, span, div { font-size: ${bodyFontSize}px !important; }
+                `;
+                doc.head.appendChild(fontSizeStyle);
+
                 // 5. 將修改後的 HTML 轉回字串
                 const metaCharset = doc.createElement('meta');
                 metaCharset.setAttribute('charset', 'UTF-8');
@@ -385,12 +409,14 @@
         });
 
         // 字型大小控制
-        let currentFontSize = 16;
+        let headingFontSize = 16;
+        let bodyFontSize = 14;
         const MIN_FONT = 12;
         const MAX_FONT = 30;
 
         function applyFontSize() {
-            document.getElementById('fontSizeDisplay').textContent = currentFontSize + 'px';
+            document.getElementById('headingSizeDisplay').textContent = headingFontSize + 'px';
+            document.getElementById('bodySizeDisplay').textContent = bodyFontSize + 'px';
             const iframe = document.getElementById('previewFrame');
             if (iframe.contentDocument && iframe.contentDocument.head) {
                 let styleEl = iframe.contentDocument.getElementById('__font-ctrl__');
@@ -399,15 +425,35 @@
                     styleEl.id = '__font-ctrl__';
                     iframe.contentDocument.head.appendChild(styleEl);
                 }
-                styleEl.innerHTML = `body, td, th, p, span, li, div { font-size: ${currentFontSize}px !important; }`;
+                styleEl.innerHTML = `
+                    th, tr:first-child td, td.theme-header-cell, h1, h2, h3, h4, h5, h6 { font-size: ${headingFontSize}px !important; }
+                    td:not(.theme-header-cell), p, li, span, div { font-size: ${bodyFontSize}px !important; }
+                `;
             }
         }
 
-        document.getElementById('fontDecBtn').addEventListener('click', () => {
-            if (currentFontSize > MIN_FONT) { currentFontSize--; applyFontSize(); }
+        document.getElementById('headingDecBtn').addEventListener('click', () => {
+            if (headingFontSize > MIN_FONT) { headingFontSize--; applyFontSize(); }
         });
-        document.getElementById('fontIncBtn').addEventListener('click', () => {
-            if (currentFontSize < MAX_FONT) { currentFontSize++; applyFontSize(); }
+        document.getElementById('headingIncBtn').addEventListener('click', () => {
+            if (headingFontSize < MAX_FONT) { headingFontSize++; applyFontSize(); }
+        });
+        document.getElementById('bodyDecBtn').addEventListener('click', () => {
+            if (bodyFontSize > MIN_FONT) { bodyFontSize--; applyFontSize(); }
+        });
+        document.getElementById('bodyIncBtn').addEventListener('click', () => {
+            if (bodyFontSize < MAX_FONT) { bodyFontSize++; applyFontSize(); }
+        });
+
+        // 收合／展開設定面板
+        document.getElementById('toggleSettingsBtn').addEventListener('click', () => {
+            const panel = document.getElementById('settingsPanel');
+            const arrow = document.getElementById('toggleArrow');
+            const label = document.getElementById('toggleLabel');
+            const isVisible = !panel.classList.contains('hidden');
+            panel.classList.toggle('hidden', isVisible);
+            arrow.style.transform = isVisible ? 'rotate(-90deg)' : '';
+            label.textContent = isVisible ? '展開設定' : '收合設定';
         });
     </script>
 </body>
