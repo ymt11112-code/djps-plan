@@ -101,7 +101,7 @@
                     ↗️ 另開視窗全螢幕瀏覽
                 </a>
                 <!-- 下載檔案連結 -->
-                <a id="downloadBtn" href="#" download="美化後課程計畫.html" class="bg-gray-800 hover:bg-gray-900 text-white text-sm font-bold py-2 px-4 rounded shadow transition duration-150">
+                <a id="downloadBtn" href="#" download="調整後的課程計畫首頁.html" class="bg-gray-800 hover:bg-gray-900 text-white text-sm font-bold py-2 px-4 rounded shadow transition duration-150">
                     💾 下載處理後的網頁 (供上傳至伺服器)
                 </a>
                 <!-- 字型大小控制 -->
@@ -183,6 +183,37 @@
 
         // 保存前一個產生的 Blob URL (為了釋放記憶體)
         let previousObjectUrl = null;
+        // 儲存不含字型控制樣式的基底 HTML，供下載時動態注入
+        let baseHtmlForDownload = null;
+
+        // 字型大小控制（10 級可調）
+        const HEADING_SIZES = [12, 13, 14, 15, 16, 18, 20, 22, 24, 28];
+        const BODY_SIZES    = [10, 11, 12, 13, 14, 15, 16, 18, 20, 22];
+        let headingIdx = 4; // 預設第5級 = 16px
+        let bodyIdx    = 4; // 預設第5級 = 14px
+
+        function getFontCtrlCSS() {
+            const h = HEADING_SIZES[headingIdx];
+            const b = BODY_SIZES[bodyIdx];
+            return `
+                    th, tr:first-child td, td.theme-header-cell, h1, h2, h3, h4, h5, h6,
+                    .theme-page-title, .theme-page-title * { font-size: ${h}px !important; }
+                    td:not(.theme-header-cell), p:not(.theme-page-title), li, span:not(.theme-page-title *),
+                    div:not(.theme-page-title) { font-size: ${b}px !important; }
+                `;
+        }
+
+        function updateDownloadBlob() {
+            if (!baseHtmlForDownload) return;
+            if (previousObjectUrl) URL.revokeObjectURL(previousObjectUrl);
+            const htmlWithFont = baseHtmlForDownload.replace('</head>',
+                `<style id="__font-ctrl__">${getFontCtrlCSS()}</style>\n</head>`);
+            const blob = new Blob([htmlWithFont], { type: 'text/html;charset=utf-8' });
+            const objectUrl = URL.createObjectURL(blob);
+            previousObjectUrl = objectUrl;
+            document.getElementById('openTabBtn').href = objectUrl;
+            document.getElementById('downloadBtn').href = objectUrl;
+        }
 
         document.getElementById('renderBtn').addEventListener('click', () => {
             const fileInput = document.getElementById('fileInput');
@@ -345,46 +376,45 @@
                     });
                 }
 
+                // 3b. 偵測頁面主標題（含「學年度」或「課程計畫」且短於 80 字的段落/標題元素）
+                const titleCandidates = doc.querySelectorAll('p, h1, h2, h3, h4, h5, h6, div');
+                titleCandidates.forEach(el => {
+                    // 排除表格內的元素
+                    if (el.closest('table')) return;
+                    const txt = el.textContent.trim();
+                    if (txt.length > 0 && txt.length < 80 &&
+                        (txt.includes('學年度') || txt.includes('課程計畫')) &&
+                        (txt.includes('國民小學') || txt.includes('國中') || txt.includes('高中') ||
+                         txt.includes('學校') || txt.includes('總體'))) {
+                        el.classList.add('theme-page-title');
+                    }
+                });
+
                 // 4. 套用自訂標題
                 const customTitle = document.getElementById('titleInput').value.trim();
                 if (customTitle) doc.title = customTitle;
 
-                // 4b. 注入字型大小樣式（標題 & 內文），寫入輸出 HTML
-                const fontSizeStyle = doc.createElement('style');
-                fontSizeStyle.id = '__font-ctrl__';
-                fontSizeStyle.innerHTML = `
-                    th, tr:first-child td, td.theme-header-cell, h1, h2, h3, h4, h5, h6 { font-size: ${headingFontSize}px !important; }
-                    td:not(.theme-header-cell), p, li, span, div { font-size: ${bodyFontSize}px !important; }
-                `;
-                doc.head.appendChild(fontSizeStyle);
-
-                // 5. 將修改後的 HTML 轉回字串
+                // 4b. 儲存基底 HTML（不含字型控制樣式），供字型調整後重新產生下載檔
                 const metaCharset = doc.createElement('meta');
                 metaCharset.setAttribute('charset', 'UTF-8');
                 doc.head.insertBefore(metaCharset, doc.head.firstChild);
-                
-                const finalHtmlString = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
-                
+                baseHtmlForDownload = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
+
+                // 4c. 注入字型大小樣式至 iframe 預覽用 HTML
+                const fontSizeStyle = doc.createElement('style');
+                fontSizeStyle.id = '__font-ctrl__';
+                fontSizeStyle.innerHTML = getFontCtrlCSS();
+                doc.head.appendChild(fontSizeStyle);
+
                 // 5. 更新 iframe 預覽
+                const finalHtmlString = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
                 iframe.srcdoc = finalHtmlString;
                 placeholder.classList.add('hidden');
                 iframe.classList.remove('hidden');
 
-                // 6. 產生 Blob URL 以供「直接瀏覽」與「下載」
-                if (previousObjectUrl) {
-                    URL.revokeObjectURL(previousObjectUrl);
-                }
-                const blob = new Blob([finalHtmlString], { type: 'text/html;charset=utf-8' });
-                const objectUrl = URL.createObjectURL(blob);
-                previousObjectUrl = objectUrl;
+                // 6. 產生 Blob URL（含目前字型設定），以供「直接瀏覽」與「下載」
+                updateDownloadBlob();
 
-                // 更新按鈕連結並顯示控制面板
-                const openBtn = document.getElementById('openTabBtn');
-                const dlBtn = document.getElementById('downloadBtn');
-                
-                openBtn.href = objectUrl;
-                dlBtn.href = objectUrl;
-                
                 actionPanel.classList.remove('hidden');
             };
 
@@ -408,15 +438,9 @@
             reader.readAsText(file, encoding);
         });
 
-        // 字型大小控制
-        let headingFontSize = 16;
-        let bodyFontSize = 14;
-        const MIN_FONT = 12;
-        const MAX_FONT = 30;
-
         function applyFontSize() {
-            document.getElementById('headingSizeDisplay').textContent = headingFontSize + 'px';
-            document.getElementById('bodySizeDisplay').textContent = bodyFontSize + 'px';
+            document.getElementById('headingSizeDisplay').textContent = HEADING_SIZES[headingIdx] + 'px';
+            document.getElementById('bodySizeDisplay').textContent = BODY_SIZES[bodyIdx] + 'px';
             const iframe = document.getElementById('previewFrame');
             if (iframe.contentDocument && iframe.contentDocument.head) {
                 let styleEl = iframe.contentDocument.getElementById('__font-ctrl__');
@@ -425,24 +449,22 @@
                     styleEl.id = '__font-ctrl__';
                     iframe.contentDocument.head.appendChild(styleEl);
                 }
-                styleEl.innerHTML = `
-                    th, tr:first-child td, td.theme-header-cell, h1, h2, h3, h4, h5, h6 { font-size: ${headingFontSize}px !important; }
-                    td:not(.theme-header-cell), p, li, span, div { font-size: ${bodyFontSize}px !important; }
-                `;
+                styleEl.innerHTML = getFontCtrlCSS();
             }
+            updateDownloadBlob();
         }
 
         document.getElementById('headingDecBtn').addEventListener('click', () => {
-            if (headingFontSize > MIN_FONT) { headingFontSize--; applyFontSize(); }
+            if (headingIdx > 0) { headingIdx--; applyFontSize(); }
         });
         document.getElementById('headingIncBtn').addEventListener('click', () => {
-            if (headingFontSize < MAX_FONT) { headingFontSize++; applyFontSize(); }
+            if (headingIdx < HEADING_SIZES.length - 1) { headingIdx++; applyFontSize(); }
         });
         document.getElementById('bodyDecBtn').addEventListener('click', () => {
-            if (bodyFontSize > MIN_FONT) { bodyFontSize--; applyFontSize(); }
+            if (bodyIdx > 0) { bodyIdx--; applyFontSize(); }
         });
         document.getElementById('bodyIncBtn').addEventListener('click', () => {
-            if (bodyFontSize < MAX_FONT) { bodyFontSize++; applyFontSize(); }
+            if (bodyIdx < BODY_SIZES.length - 1) { bodyIdx++; applyFontSize(); }
         });
 
         // 收合／展開設定面板
