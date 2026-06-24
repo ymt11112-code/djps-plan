@@ -104,7 +104,7 @@
                 <a id="downloadBtn" href="#" download="調整後的課程計畫首頁.html" class="bg-gray-800 hover:bg-gray-900 text-white text-sm font-bold py-2 px-4 rounded shadow transition duration-150">
                     💾 下載處理後的網頁 (供上傳至伺服器)
                 </a>
-                <!-- 字型大小控制 -->
+                <!-- 字型大小與格線控制 -->
                 <div class="ml-auto flex flex-col gap-1.5 border-l border-green-300 pl-4">
                     <div class="flex items-center gap-2">
                         <span class="text-gray-600 text-xs font-medium w-8 shrink-0">標題：</span>
@@ -117,6 +117,13 @@
                         <button id="bodyDecBtn" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-800 font-bold py-0.5 px-2.5 rounded shadow-sm text-sm">A－</button>
                         <span id="bodySizeDisplay" class="text-xs font-mono w-12 text-center border border-gray-200 bg-white rounded py-0.5">14px</span>
                         <button id="bodyIncBtn" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-800 font-bold py-0.5 px-2.5 rounded shadow-sm text-sm">A＋</button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-gray-600 text-xs font-medium w-8 shrink-0">格線：</span>
+                        <button id="borderDecBtn" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-800 font-bold py-0.5 px-2.5 rounded shadow-sm text-sm">細－</button>
+                        <span id="borderWidthDisplay" class="text-xs font-mono w-12 text-center border border-gray-200 bg-white rounded py-0.5">1px</span>
+                        <button id="borderIncBtn" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-800 font-bold py-0.5 px-2.5 rounded shadow-sm text-sm">粗＋</button>
+                        <input type="color" id="borderColorPicker" value="#d1d5db" title="格線顏色" class="w-7 h-7 rounded cursor-pointer border border-gray-300 p-0">
                     </div>
                 </div>
             </div>
@@ -138,9 +145,9 @@
         // 定義不同風格的 CSS 注入代碼，加入 :not(.theme-header-cell) 避免斑馬紋覆蓋標題深色
         const themes = {
             blue: `
-                body { font-family: 'Noto Sans TC', sans-serif !important; padding: 20px; background: #f4f7f6; color: #333; }
-                table { width: 100% !important; border-collapse: collapse !important; background: #fff; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; }
-                td, th { padding: 12px 16px !important; border: 1px solid #e5e7eb !important; text-align: left; }
+                body { font-family: 'Noto Sans TC', sans-serif !important; padding: 20px; background: #f4f7f6; color: #333; line-height: 1.6; overflow-x: hidden; }
+                table { width: 100% !important; border-collapse: collapse !important; background: #fff; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; word-wrap: break-word; }
+                td, th { padding: 8px 12px !important; border: 1px solid #e5e7eb !important; text-align: left; word-break: break-word; overflow-wrap: break-word; line-height: 1.6; }
                 tr:first-child td, thead td, th { background-color: #1e3a8a !important; color: #ffffff !important; font-weight: bold !important; }
                 tr:first-child p, tr:first-child span { color: #ffffff !important; }
                 tr:nth-child(even):not(:first-child) td:not(.theme-header-cell) { background-color: #f8fafc !important; }
@@ -152,9 +159,9 @@
                 td.theme-header-cell * { color: #ffffff !important; }
             `,
             green: `
-                body { font-family: 'Noto Sans TC', sans-serif !important; padding: 20px; background: #f0fdf4; color: #333; }
-                table { width: 100% !important; border-collapse: collapse !important; background: #fff; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-                td, th { padding: 12px 16px !important; border: 1px solid #d1fae5 !important; text-align: left; }
+                body { font-family: 'Noto Sans TC', sans-serif !important; padding: 20px; background: #f0fdf4; color: #333; line-height: 1.6; overflow-x: hidden; }
+                table { width: 100% !important; border-collapse: collapse !important; background: #fff; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); word-wrap: break-word; }
+                td, th { padding: 8px 12px !important; border: 1px solid #d1fae5 !important; text-align: left; word-break: break-word; overflow-wrap: break-word; line-height: 1.6; }
                 tr:first-child td, thead td, th { background-color: #065f46 !important; color: #ffffff !important; font-weight: bold !important; border-color: #065f46 !important; }
                 tr:first-child p, tr:first-child span { color: #ffffff !important; }
                 tr:nth-child(even):not(:first-child) td:not(.theme-header-cell) { background-color: #ecfdf5 !important; }
@@ -166,9 +173,9 @@
                 td.theme-header-cell * { color: #ffffff !important; }
             `,
             orange: `
-                body { font-family: 'Noto Sans TC', sans-serif !important; padding: 20px; background: #fff7ed; color: #333; }
-                table { width: 100% !important; border-collapse: collapse !important; background: #fff; margin-bottom: 20px; border: 2px solid #fdba74 !important; }
-                td, th { padding: 12px 16px !important; border: 1px solid #fed7aa !important; text-align: left; }
+                body { font-family: 'Noto Sans TC', sans-serif !important; padding: 20px; background: #fff7ed; color: #333; line-height: 1.6; overflow-x: hidden; }
+                table { width: 100% !important; border-collapse: collapse !important; background: #fff; margin-bottom: 20px; border: 2px solid #fdba74 !important; word-wrap: break-word; }
+                td, th { padding: 8px 12px !important; border: 1px solid #fed7aa !important; text-align: left; word-break: break-word; overflow-wrap: break-word; line-height: 1.6; }
                 tr:first-child td, thead td, th { background-color: #c2410c !important; color: #ffffff !important; font-weight: bold !important; }
                 tr:first-child p, tr:first-child span { color: #ffffff !important; }
                 tr:nth-child(even):not(:first-child) td:not(.theme-header-cell) { background-color: #ffedd5 !important; }
@@ -192,6 +199,19 @@
         let headingIdx = 4; // 預設第5級 = 16px
         let bodyIdx    = 4; // 預設第5級 = 14px
 
+        // 格線控制
+        const BORDER_WIDTHS = [0.5, 1, 1.5, 2, 3];
+        let borderWidthIdx = 1; // 預設 1px
+        let borderColor = '#d1d5db';
+        let borderCtrlActive = false;
+
+        function getBorderCtrlCSS() {
+            if (!borderCtrlActive) return '';
+            const w = BORDER_WIDTHS[borderWidthIdx];
+            const c = borderColor;
+            return `table { border: ${w}px solid ${c} !important; } td, th { border: ${w}px solid ${c} !important; }`;
+        }
+
         function getFontCtrlCSS() {
             const h = HEADING_SIZES[headingIdx];
             const b = BODY_SIZES[bodyIdx];
@@ -207,7 +227,7 @@
             if (!baseHtmlForDownload) return;
             if (previousObjectUrl) URL.revokeObjectURL(previousObjectUrl);
             const htmlWithFont = baseHtmlForDownload.replace('</head>',
-                `<style id="__font-ctrl__">${getFontCtrlCSS()}</style>\n</head>`);
+                `<style id="__font-ctrl__">${getFontCtrlCSS()}</style>\n<style id="__border-ctrl__">${getBorderCtrlCSS()}</style>\n</head>`);
             const blob = new Blob([htmlWithFont], { type: 'text/html;charset=utf-8' });
             const objectUrl = URL.createObjectURL(blob);
             previousObjectUrl = objectUrl;
@@ -288,6 +308,23 @@
                 }
 
                 // 3. 注入美化 CSS 與表格欄位智慧分析
+                // 3a. 移除 Word 固定寬高，使表格自適應視窗（所有主題皆套用）
+                doc.querySelectorAll('table, col, colgroup').forEach(el => {
+                    el.removeAttribute('width');
+                    if (el.style) { el.style.width = ''; el.style.minWidth = ''; }
+                });
+                doc.querySelectorAll('td, th').forEach(el => {
+                    el.removeAttribute('width');
+                    if (el.style) { el.style.width = ''; el.style.minWidth = ''; el.style.maxWidth = ''; }
+                });
+                doc.querySelectorAll('tr').forEach(el => {
+                    el.removeAttribute('height');
+                    if (el.style) el.style.height = '';
+                });
+                const baseRespStyle = doc.createElement('style');
+                baseRespStyle.innerHTML = `body { overflow-x: hidden; } table { width: 100% !important; word-wrap: break-word; } td, th { word-break: break-word; overflow-wrap: break-word; }`;
+                doc.head.appendChild(baseRespStyle);
+
                 if (theme !== 'none') {
                     // 清除 Word 背景色，以免影響樣式套用
                     doc.querySelectorAll('td, th, tr').forEach(el => {
@@ -406,6 +443,17 @@
                 fontSizeStyle.innerHTML = getFontCtrlCSS();
                 doc.head.appendChild(fontSizeStyle);
 
+                // 4d. 初始化格線控制（每次重新套用時重設）
+                borderCtrlActive = false;
+                borderWidthIdx = 1;
+                borderColor = '#d1d5db';
+                document.getElementById('borderColorPicker').value = borderColor;
+                document.getElementById('borderWidthDisplay').textContent = BORDER_WIDTHS[borderWidthIdx] + 'px';
+                const borderCtrlStyle = doc.createElement('style');
+                borderCtrlStyle.id = '__border-ctrl__';
+                borderCtrlStyle.innerHTML = '';
+                doc.head.appendChild(borderCtrlStyle);
+
                 // 5. 更新 iframe 預覽
                 const finalHtmlString = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
                 iframe.srcdoc = finalHtmlString;
@@ -454,6 +502,22 @@
             updateDownloadBlob();
         }
 
+        function applyBorderStyle() {
+            borderCtrlActive = true;
+            document.getElementById('borderWidthDisplay').textContent = BORDER_WIDTHS[borderWidthIdx] + 'px';
+            const iframe = document.getElementById('previewFrame');
+            if (iframe.contentDocument && iframe.contentDocument.head) {
+                let styleEl = iframe.contentDocument.getElementById('__border-ctrl__');
+                if (!styleEl) {
+                    styleEl = iframe.contentDocument.createElement('style');
+                    styleEl.id = '__border-ctrl__';
+                    iframe.contentDocument.head.appendChild(styleEl);
+                }
+                styleEl.innerHTML = getBorderCtrlCSS();
+            }
+            updateDownloadBlob();
+        }
+
         document.getElementById('headingDecBtn').addEventListener('click', () => {
             if (headingIdx > 0) { headingIdx--; applyFontSize(); }
         });
@@ -465,6 +529,16 @@
         });
         document.getElementById('bodyIncBtn').addEventListener('click', () => {
             if (bodyIdx < BODY_SIZES.length - 1) { bodyIdx++; applyFontSize(); }
+        });
+        document.getElementById('borderDecBtn').addEventListener('click', () => {
+            if (borderWidthIdx > 0) { borderWidthIdx--; applyBorderStyle(); }
+        });
+        document.getElementById('borderIncBtn').addEventListener('click', () => {
+            if (borderWidthIdx < BORDER_WIDTHS.length - 1) { borderWidthIdx++; applyBorderStyle(); }
+        });
+        document.getElementById('borderColorPicker').addEventListener('input', (e) => {
+            borderColor = e.target.value;
+            applyBorderStyle();
         });
 
         // 收合／展開設定面板
