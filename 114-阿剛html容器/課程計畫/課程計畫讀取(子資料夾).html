@@ -709,7 +709,11 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
                         const firstCol = gradeCols[0].startCol;
                         const last = gradeCols[gradeCols.length - 1];
                         const lastCol = last.startCol + last.cs - 1;
-                        const totalBase = lastCol - firstCol + 1;
+                        const totalBase = Math.max(lastCol - firstCol + 1, gradeCols.length * 2);
+                        if (firstCol + totalBase > maxCols) {
+                            maxCols = firstCol + totalBase;
+                            colWidths = new Array(maxCols).fill(100 / maxCols);
+                        }
                         const n = gradeCols.length;
                         // 設各年級格 colspan 均等（整除）
                         const base = Math.floor(totalBase / n), rem = totalBase % n;
@@ -745,11 +749,17 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
                         });
                         Array.from(table.rows).forEach(row => {
                             const entries = tableMap.filter(e => e.row === row);
-                            const classEntries = entries.filter(e => classLabelRe.test(e.cell.textContent.replace(/\s+/g, '')));
+                            const gradeAreaEntries = entries.filter(e => e.startCol >= firstCol);
+                            const classEntries = gradeAreaEntries.filter(e => classLabelRe.test(e.cell.textContent.replace(/\s+/g, '')));
                             if (classEntries.length < 2) return;
+                            const simpleGradeArea = gradeAreaEntries.every(e => {
+                                const label = e.cell.textContent.replace(/\s+/g, '').toUpperCase();
+                                return label === '' || label === '-' || label === '－' || classLabelRe.test(label);
+                            });
+                            if (!simpleGradeArea) return;
 
                             const existingByLabel = new Map();
-                            entries.forEach(e => {
+                            gradeAreaEntries.forEach(e => {
                                 const label = e.cell.textContent.replace(/\s+/g, '').toUpperCase();
                                 if (classLabelRe.test(label) && !existingByLabel.has(label)) {
                                     existingByLabel.set(label, e.cell);
@@ -757,7 +767,7 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
                             });
 
                             const removableEntries = entries.filter(e =>
-                                e.startCol >= firstCol || classLabelRe.test(e.cell.textContent.replace(/\s+/g, ''))
+                                e.startCol >= firstCol
                             );
                             const firstRemovable = removableEntries[0] ? removableEntries[0].cell : null;
                             const removeSet = new Set(removableEntries.map(e => e.cell));
