@@ -161,7 +161,7 @@
                     <div class="flex items-center gap-1 shrink-0">
                         <span class="text-gray-500 text-xs">目錄</span>
                         <button id="indexColDecBtn" class="cbtn">－</button>
-                        <span id="indexColWidthDisplay" class="cval">56</span>
+                        <span id="indexColWidthDisplay" class="cval">88</span>
                         <button id="indexColIncBtn" class="cbtn">＋</button>
                     </div>
                     <!-- 格線 -->
@@ -383,13 +383,13 @@
         let bodyIdx    = 4;
 
         // 行高（垂直 padding）
-        const ROW_PADDINGS = [2, 4, 6, 8, 10, 12, 16, 20, 24];
-        let rowPaddingIdx = 3;
+        const ROW_PADDINGS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24];
+        let rowPaddingIdx = 6;
         let rowHeightCtrlActive = false;
 
         // 目錄 A/B/C、D/E/F、H/I/J/K/L 索引欄寬
         const INDEX_COL_WIDTHS = [32, 40, 48, 56, 64, 72, 88, 104, 120];
-        let indexColWidthIdx = 3;
+        let indexColWidthIdx = 6;
 
         // 格線
         const BORDER_WIDTHS = [0.5, 1, 1.5, 2, 3];
@@ -414,8 +414,8 @@
         function getRowHeightCSS() {
             if (!rowHeightCtrlActive) return '';
             const p = ROW_PADDINGS[rowPaddingIdx];
-            const lh = p <= 2 ? 1.1 : p <= 6 ? 1.3 : p <= 10 ? 1.5 : 1.6;
-            const ph = Math.max(4, p * 2);
+            const lh = p <= 2 ? 1.1 : p <= 6 ? 1.25 : p <= 10 ? 1.4 : p <= 16 ? 1.5 : 1.6;
+            const ph = Math.max(4, Math.round(p * 1.5));
             return `td,th{padding:${p}px ${ph}px !important;line-height:${lh} !important;}
 td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important;}`;
         }
@@ -430,6 +430,21 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
                     max-width:${w}px !important;
                     text-align:center !important;
                     white-space:nowrap !important;
+                }
+            `;
+        }
+
+        function getSpecialCellCSS() {
+            return `
+                td.theme-plan-section-cell, th.theme-plan-section-cell {
+                    background-color:#f3ead4 !important;
+                    color:#111 !important;
+                    font-weight:bold !important;
+                    text-align:center !important;
+                }
+                td.theme-plan-section-cell *, th.theme-plan-section-cell * {
+                    background-color:transparent !important;
+                    color:inherit !important;
                 }
             `;
         }
@@ -459,6 +474,7 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
                 `<style id="__font-face-ctrl__">${faceCss}</style>\n` +
                 `<style id="__font-family-ctrl__">${fontCSS}</style>\n` +
                 `<style id="__font-ctrl__">${getFontCtrlCSS()}</style>\n` +
+                `<style id="__special-cell-style__">${getSpecialCellCSS()}</style>\n` +
                 `<style id="__row-height-ctrl__">${getRowHeightCSS()}</style>\n` +
                 `<style id="__index-col-width-ctrl__">${getIndexColWidthCSS()}</style>\n` +
                 `<style id="__border-ctrl__">${getBorderCtrlCSS()}</style>\n</head>`);
@@ -610,6 +626,25 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
 
                 // 3a-2+3. 年級欄等寬 colgroup（含年級列 colspan 均等化）
                 const gradeRe = /^[一二三四五六七八九十]年級$/;
+                const classLabelRe = /^[1-6]\s*[AB]$/i;
+                const fLabelRe = /^f\s*[-－]\s*[1-4]/i;
+                const buildCellMap = (table, maxCols) => {
+                    const map = [];
+                    const rsLeft = new Array(maxCols).fill(0);
+                    for (const row of Array.from(table.rows)) {
+                        for (let c = 0; c < maxCols; c++) { if (rsLeft[c] > 0) rsLeft[c]--; }
+                        let col = 0;
+                        for (const cell of Array.from(row.cells)) {
+                            while (col < maxCols && rsLeft[col] > 0) col++;
+                            if (col >= maxCols) break;
+                            const cs = cell.colSpan || 1, rs = cell.rowSpan || 1;
+                            map.push({ row, cell, startCol: col, cs, rs });
+                            for (let c = col; c < Math.min(col + cs, maxCols); c++) rsLeft[c] = Math.max(rsLeft[c], rs);
+                            col += cs;
+                        }
+                    }
+                    return map;
+                };
                 doc.querySelectorAll('table').forEach(table => {
                     // ── 計算 maxCols ──
                     let maxCols = 0;
@@ -634,7 +669,7 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
                             const text = cell.textContent.trim().toUpperCase();
                             if (indexLetterRe.test(text)) {
                                 indexLetterCells.push(cell);
-                                for (let c = col; c < Math.min(col + cs, maxCols); c++) indexLetterCols.add(c);
+                                indexLetterCols.add(col);
                             }
                             for (let c = col; c < Math.min(col + cs, maxCols); c++) indexRsLeft[c] = Math.max(indexRsLeft[c], rs);
                             col += cs;
@@ -676,6 +711,14 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
                         }
                     }
 
+                    // ── 特定標題列補底色 ──
+                    table.querySelectorAll('td, th').forEach(cell => {
+                        const text = cell.textContent.replace(/\s+/g, '');
+                        if (text.includes('學校課程實施與課程評鑑規劃')) {
+                            cell.classList.add('theme-plan-section-cell');
+                        }
+                    });
+
                     // ── 重新計算總跨欄並均等化年級格 colspan ──
                     let colWidths = new Array(maxCols).fill(100 / maxCols);
                     if (gradeCols && gradeCols.length >= 2) {
@@ -695,7 +738,63 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
                             const perBase = totalGradeW / totalBase; // already equal per base col
                             for (let c = 0; c < span; c++) { colWidths[c2++] = perBase; }
                         }
+
+                        // 讓 1A/1B 對應一年級、2A/2B 對應二年級，以此類推
+                        const tableMap = buildCellMap(table, maxCols);
+                        let gradeCursor = firstCol;
+                        const gradeSpans = gradeCols.map((g, i) => {
+                            const span = base + (i < rem ? 1 : 0);
+                            const current = { start: gradeCursor, span, label: g.cell.textContent.trim() };
+                            gradeCursor += span;
+                            return current;
+                        });
+                        Array.from(table.rows).forEach(row => {
+                            const entries = tableMap.filter(e => e.row === row);
+                            const classCells = entries.filter(e => classLabelRe.test(e.cell.textContent.replace(/\s+/g, '')));
+                            if (classCells.length >= 2) {
+                                const byGrade = new Map();
+                                classCells.forEach(e => {
+                                    const label = e.cell.textContent.replace(/\s+/g, '').toUpperCase();
+                                    const gradeNo = Number(label[0]);
+                                    if (!byGrade.has(gradeNo)) byGrade.set(gradeNo, []);
+                                    byGrade.get(gradeNo).push(e);
+                                });
+                                byGrade.forEach((group, gradeNo) => {
+                                    const grade = gradeSpans[gradeNo - 1];
+                                    if (!grade) return;
+                                    const classBase = Math.floor(grade.span / group.length);
+                                    const classRem = grade.span % group.length;
+                                    group.forEach((e, i) => {
+                                        e.cell.colSpan = Math.max(1, classBase + (i < classRem ? 1 : 0));
+                                        e.cell.style.width = `${(100 / Math.max(1, classCells.length)).toFixed(3)}%`;
+                                    });
+                                });
+                            }
+                        });
                     }
+
+                    // 讓 f-1～f-4 這列在扣除左側 F 索引欄後平均分配欄寬
+                    Array.from(table.rows).forEach(row => {
+                        const rowEntries = buildCellMap(table, maxCols).filter(e => e.row === row);
+                        const fEntries = rowEntries.filter(e => fLabelRe.test(e.cell.textContent.trim()));
+                        if (fEntries.length >= 4) {
+                            const firstF = Math.min(...fEntries.map(e => e.startCol));
+                            const lastF = Math.max(...fEntries.map(e => e.startCol + e.cs - 1));
+                            const totalSpan = lastF - firstF + 1;
+                            const base = Math.floor(totalSpan / fEntries.length);
+                            const rem = totalSpan % fEntries.length;
+                            let cursor = firstF;
+                            fEntries.forEach((entry, i) => {
+                                const span = Math.max(1, base + (i < rem ? 1 : 0));
+                                entry.cell.colSpan = span;
+                                entry.cell.style.width = `${(100 / fEntries.length).toFixed(3)}%`;
+                                for (let c = cursor; c < Math.min(cursor + span, colWidths.length); c++) {
+                                    colWidths[c] = 100 / maxCols;
+                                }
+                                cursor += span;
+                            });
+                        }
+                    });
 
                     // ── 注入 colgroup ──
                     table.querySelectorAll('colgroup, col').forEach(e => e.remove());
@@ -810,6 +909,11 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
                 themeStyleEl.innerHTML = '';
                 doc.head.appendChild(themeStyleEl);
 
+                const specialCellStyle = doc.createElement('style');
+                specialCellStyle.id = '__special-cell-style__';
+                specialCellStyle.innerHTML = getSpecialCellCSS();
+                doc.head.appendChild(specialCellStyle);
+
                 baseHtmlForDownload = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
 
                 // 4d. 套用當前主題至 iframe
@@ -818,9 +922,9 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
 
                 // 4e. 重設控制列並加入佔位 style
                 rowHeightCtrlActive = false;
-                rowPaddingIdx = 3;
+                rowPaddingIdx = 6;
                 document.getElementById('rowHeightDisplay').textContent = ROW_PADDINGS[rowPaddingIdx];
-                indexColWidthIdx = 3;
+                indexColWidthIdx = 6;
                 document.getElementById('indexColWidthDisplay').textContent = INDEX_COL_WIDTHS[indexColWidthIdx];
                 borderCtrlActive = false;
                 borderWidthIdx   = 1;
