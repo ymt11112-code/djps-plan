@@ -610,26 +610,7 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
 
                 // 3a-2+3. 年級欄等寬 colgroup（含年級列 colspan 均等化）
                 const gradeRe = /^[一二三四五六七八九十]年級$/;
-                const classLabelRe = /^[1-6]\s*[AB]$/i;
                 const fLabelRe = /^f\s*[-－]\s*[1-4]/i;
-                const getClassSlotIndex = (raw) => {
-                    const label = (raw || '').replace(/\s+/g, '').toUpperCase();
-                    if (label === '' || label === '-' || label === '－') return null;
-
-                    const classMatch = label.match(/^([1-6])([AB])/);
-                    if (classMatch) {
-                        return (Number(classMatch[1]) - 1) * 2 + (classMatch[2] === 'B' ? 1 : 0);
-                    }
-
-                    const gMatch = label.match(/^G([1-6])/);
-                    if (gMatch) {
-                        const gradeNo = Number(gMatch[1]);
-                        const isLower = label.includes('下');
-                        return (gradeNo - 1) * 2 + (isLower ? 1 : 0);
-                    }
-
-                    return undefined;
-                };
                 const buildCellMap = (table, maxCols) => {
                     const map = [];
                     const rsLeft = new Array(maxCols).fill(0);
@@ -679,15 +660,7 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
                         }
                     }
                     if (indexLetterCols.size >= 3) {
-                        indexLetterCells.forEach(cell => {
-                            cell.classList.add('theme-index-letter-cell');
-                            const extraSpan = (cell.colSpan || 1) - 1;
-                            if (extraSpan > 0) {
-                                cell.colSpan = 1;
-                                const next = cell.nextElementSibling;
-                                if (next) next.colSpan = (next.colSpan || 1) + extraSpan;
-                            }
-                        });
+                        indexLetterCells.forEach(cell => cell.classList.add('theme-index-letter-cell'));
                     } else {
                         indexLetterCols.clear();
                     }
@@ -736,11 +709,7 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
                         const firstCol = gradeCols[0].startCol;
                         const last = gradeCols[gradeCols.length - 1];
                         const lastCol = last.startCol + last.cs - 1;
-                        const totalBase = Math.max(lastCol - firstCol + 1, gradeCols.length * 2);
-                        if (firstCol + totalBase > maxCols) {
-                            maxCols = firstCol + totalBase;
-                            colWidths = new Array(maxCols).fill(100 / maxCols);
-                        }
+                        const totalBase = lastCol - firstCol + 1;
                         const n = gradeCols.length;
                         // 設各年級格 colspan 均等（整除）
                         const base = Math.floor(totalBase / n), rem = totalBase % n;
@@ -754,62 +723,21 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
                             for (let c = 0; c < span; c++) { colWidths[c2++] = perBase; }
                         }
 
-                        // 讓 1A/1B 對應一年級、2A/2B 對應二年級，以此類推
+                        // 原本已有 12 個年級儲存格的列，只統一寬度，不重建 DOM
                         const tableMap = buildCellMap(table, maxCols);
-                        let gradeCursor = firstCol;
-                        const gradeSpans = gradeCols.map((g, i) => {
-                            const span = base + (i < rem ? 1 : 0);
-                            const current = { start: gradeCursor, span, label: g.cell.textContent.trim() };
-                            gradeCursor += span;
-                            return current;
-                        });
-                        const classSlots = [];
-                        gradeSpans.forEach((grade, gradeIndex) => {
-                            const classBase = Math.floor(grade.span / 2);
-                            const classRem = grade.span % 2;
-                            ['A', 'B'].forEach((section, i) => {
-                                classSlots.push({
-                                    label: `${gradeIndex + 1}${section}`,
-                                    span: Math.max(1, classBase + (i < classRem ? 1 : 0))
-                                });
-                            });
-                        });
                         Array.from(table.rows).forEach(row => {
                             const entries = tableMap.filter(e => e.row === row);
-                            const gradeAreaEntries = entries.filter(e => e.startCol >= firstCol);
-                            const classEntries = gradeAreaEntries.filter(e => typeof getClassSlotIndex(e.cell.textContent) === 'number');
-                            if (classEntries.length < 2) return;
-                            const simpleGradeArea = gradeAreaEntries.every(e => {
-                                const slot = getClassSlotIndex(e.cell.textContent);
-                                return slot === null || typeof slot === 'number';
-                            });
-                            if (!simpleGradeArea) return;
-
-                            const existingBySlot = new Map();
-                            gradeAreaEntries.forEach(e => {
-                                const slot = getClassSlotIndex(e.cell.textContent);
-                                if (typeof slot === 'number' && !existingBySlot.has(slot)) {
-                                    existingBySlot.set(slot, e.cell);
-                                }
-                            });
-
-                            const removableEntries = entries.filter(e =>
-                                e.startCol >= firstCol
+                            const gradeAreaEntries = entries.filter(e =>
+                                e.startCol >= firstCol && e.startCol < firstCol + totalBase
                             );
-                            const firstRemovable = removableEntries[0] ? removableEntries[0].cell : null;
-                            const removeSet = new Set(removableEntries.map(e => e.cell));
-                            const newCells = classSlots.map((slot, slotIndex) => {
-                                const existing = existingBySlot.get(slotIndex);
-                                const cell = existing ? existing.cloneNode(true) : doc.createElement('td');
-                                if (!existing) cell.textContent = '-';
-                                cell.colSpan = slot.span;
-                                cell.rowSpan = 1;
-                                cell.style.width = `${(100 / classSlots.length).toFixed(3)}%`;
-                                return cell;
+                            if (gradeAreaEntries.length !== 12) return;
+                            gradeAreaEntries.forEach(entry => {
+                                entry.cell.colSpan = 1;
+                                entry.cell.removeAttribute('width');
+                                entry.cell.style.width = `${(100 / 12).toFixed(3)}%`;
+                                entry.cell.style.minWidth = '';
+                                entry.cell.style.maxWidth = '';
                             });
-
-                            newCells.forEach(cell => row.insertBefore(cell, firstRemovable));
-                            removeSet.forEach(cell => cell.remove());
                         });
                     }
 
