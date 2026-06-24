@@ -161,7 +161,7 @@
                     <div class="flex items-center gap-1 shrink-0">
                         <span class="text-gray-500 text-xs">目錄</span>
                         <button id="indexColDecBtn" class="cbtn">－</button>
-                        <span id="indexColWidthDisplay" class="cval">88</span>
+                        <span id="indexColWidthDisplay" class="cval">56</span>
                         <button id="indexColIncBtn" class="cbtn">＋</button>
                     </div>
                     <!-- 格線 -->
@@ -389,7 +389,7 @@
 
         // 目錄 A/B/C、D/E/F、H/I/J/K/L 索引欄寬
         const INDEX_COL_WIDTHS = [32, 40, 48, 56, 64, 72, 88, 104, 120];
-        let indexColWidthIdx = 6;
+        let indexColWidthIdx = 3;
 
         // 格線
         const BORDER_WIDTHS = [0.5, 1, 1.5, 2, 3];
@@ -434,21 +434,6 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
             `;
         }
 
-        function getSpecialCellCSS() {
-            return `
-                td.theme-plan-section-cell, th.theme-plan-section-cell {
-                    background-color:#f3ead4 !important;
-                    color:#111 !important;
-                    font-weight:bold !important;
-                    text-align:center !important;
-                }
-                td.theme-plan-section-cell *, th.theme-plan-section-cell * {
-                    background-color:transparent !important;
-                    color:inherit !important;
-                }
-            `;
-        }
-
         function getBorderCtrlCSS() {
             if (!borderCtrlActive) return '';
             const w = BORDER_WIDTHS[borderWidthIdx];
@@ -474,7 +459,6 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
                 `<style id="__font-face-ctrl__">${faceCss}</style>\n` +
                 `<style id="__font-family-ctrl__">${fontCSS}</style>\n` +
                 `<style id="__font-ctrl__">${getFontCtrlCSS()}</style>\n` +
-                `<style id="__special-cell-style__">${getSpecialCellCSS()}</style>\n` +
                 `<style id="__row-height-ctrl__">${getRowHeightCSS()}</style>\n` +
                 `<style id="__index-col-width-ctrl__">${getIndexColWidthCSS()}</style>\n` +
                 `<style id="__border-ctrl__">${getBorderCtrlCSS()}</style>\n</head>`);
@@ -715,7 +699,7 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
                     table.querySelectorAll('td, th').forEach(cell => {
                         const text = cell.textContent.replace(/\s+/g, '');
                         if (text.includes('學校課程實施與課程評鑑規劃')) {
-                            cell.classList.add('theme-plan-section-cell');
+                            cell.classList.add('theme-header-cell');
                         }
                     });
 
@@ -748,28 +732,47 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
                             gradeCursor += span;
                             return current;
                         });
+                        const classSlots = [];
+                        gradeSpans.forEach((grade, gradeIndex) => {
+                            const classBase = Math.floor(grade.span / 2);
+                            const classRem = grade.span % 2;
+                            ['A', 'B'].forEach((section, i) => {
+                                classSlots.push({
+                                    label: `${gradeIndex + 1}${section}`,
+                                    span: Math.max(1, classBase + (i < classRem ? 1 : 0))
+                                });
+                            });
+                        });
                         Array.from(table.rows).forEach(row => {
                             const entries = tableMap.filter(e => e.row === row);
-                            const classCells = entries.filter(e => classLabelRe.test(e.cell.textContent.replace(/\s+/g, '')));
-                            if (classCells.length >= 2) {
-                                const byGrade = new Map();
-                                classCells.forEach(e => {
-                                    const label = e.cell.textContent.replace(/\s+/g, '').toUpperCase();
-                                    const gradeNo = Number(label[0]);
-                                    if (!byGrade.has(gradeNo)) byGrade.set(gradeNo, []);
-                                    byGrade.get(gradeNo).push(e);
-                                });
-                                byGrade.forEach((group, gradeNo) => {
-                                    const grade = gradeSpans[gradeNo - 1];
-                                    if (!grade) return;
-                                    const classBase = Math.floor(grade.span / group.length);
-                                    const classRem = grade.span % group.length;
-                                    group.forEach((e, i) => {
-                                        e.cell.colSpan = Math.max(1, classBase + (i < classRem ? 1 : 0));
-                                        e.cell.style.width = `${(100 / Math.max(1, classCells.length)).toFixed(3)}%`;
-                                    });
-                                });
-                            }
+                            const classEntries = entries.filter(e => classLabelRe.test(e.cell.textContent.replace(/\s+/g, '')));
+                            if (classEntries.length < 2) return;
+
+                            const existingByLabel = new Map();
+                            entries.forEach(e => {
+                                const label = e.cell.textContent.replace(/\s+/g, '').toUpperCase();
+                                if (classLabelRe.test(label) && !existingByLabel.has(label)) {
+                                    existingByLabel.set(label, e.cell);
+                                }
+                            });
+
+                            const removableEntries = entries.filter(e =>
+                                e.startCol >= firstCol || classLabelRe.test(e.cell.textContent.replace(/\s+/g, ''))
+                            );
+                            const firstRemovable = removableEntries[0] ? removableEntries[0].cell : null;
+                            const removeSet = new Set(removableEntries.map(e => e.cell));
+                            const newCells = classSlots.map(slot => {
+                                const existing = existingByLabel.get(slot.label);
+                                const cell = existing ? existing.cloneNode(true) : doc.createElement('td');
+                                if (!existing) cell.textContent = '-';
+                                cell.colSpan = slot.span;
+                                cell.rowSpan = 1;
+                                cell.style.width = `${(100 / classSlots.length).toFixed(3)}%`;
+                                return cell;
+                            });
+
+                            newCells.forEach(cell => row.insertBefore(cell, firstRemovable));
+                            removeSet.forEach(cell => cell.remove());
                         });
                     }
 
@@ -909,11 +912,6 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
                 themeStyleEl.innerHTML = '';
                 doc.head.appendChild(themeStyleEl);
 
-                const specialCellStyle = doc.createElement('style');
-                specialCellStyle.id = '__special-cell-style__';
-                specialCellStyle.innerHTML = getSpecialCellCSS();
-                doc.head.appendChild(specialCellStyle);
-
                 baseHtmlForDownload = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
 
                 // 4d. 套用當前主題至 iframe
@@ -924,7 +922,7 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
                 rowHeightCtrlActive = false;
                 rowPaddingIdx = 6;
                 document.getElementById('rowHeightDisplay').textContent = ROW_PADDINGS[rowPaddingIdx];
-                indexColWidthIdx = 6;
+                indexColWidthIdx = 3;
                 document.getElementById('indexColWidthDisplay').textContent = INDEX_COL_WIDTHS[indexColWidthIdx];
                 borderCtrlActive = false;
                 borderWidthIdx   = 1;
