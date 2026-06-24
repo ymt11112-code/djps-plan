@@ -115,7 +115,7 @@
                                 <option value="fun-candy">🍭 糖果彩虹</option>
                             </optgroup>
                             <optgroup label="── 其他 ──">
-                                <option value="none" selected>⚪ 保留 Word 原始樣式</option>
+                                <option value="none">⚪ 保留 Word 樣式</option>
                             </optgroup>
                         </select>
                     </div>
@@ -374,14 +374,13 @@
         // ═══════════════════════════════════════════════════
         let previousObjectUrl = null;
         let baseHtmlForDownload = null;
-        let currentLiveTheme = 'none';
+        let currentLiveTheme = 'blue';
 
         // 字型大小
         const HEADING_SIZES = [12, 13, 14, 15, 16, 18, 20, 22, 24, 28];
         const BODY_SIZES    = [10, 11, 12, 13, 14, 15, 16, 18, 20, 22];
         let headingIdx = 4;
         let bodyIdx    = 4;
-        let fontSizeCtrlActive = false;
 
         // 行高（垂直 padding）
         const ROW_PADDINGS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24];
@@ -402,7 +401,6 @@
         // CSS 產生函式
         // ═══════════════════════════════════════════════════
         function getFontCtrlCSS() {
-            if (!fontSizeCtrlActive) return '';
             const h = HEADING_SIZES[headingIdx];
             const b = BODY_SIZES[bodyIdx];
             return `
@@ -487,7 +485,6 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
         // 套用函式
         // ═══════════════════════════════════════════════════
         function applyFontSize() {
-            fontSizeCtrlActive = true;
             document.getElementById('headingSizeDisplay').textContent = HEADING_SIZES[headingIdx];
             document.getElementById('bodySizeDisplay').textContent    = BODY_SIZES[bodyIdx];
             updateIframeStyle('__font-ctrl__', getFontCtrlCSS());
@@ -554,74 +551,6 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
             if (cleanBaseUrl.includes('?')) cleanBaseUrl = cleanBaseUrl.split('?')[0];
 
             reader.onload = function(e) {
-                const preserveOriginalLayout = true;
-                if (preserveOriginalLayout) {
-                    let html = e.target.result;
-                    const customTitle = document.getElementById('titleInput').value.trim();
-                    if (customTitle) {
-                        const safeTitle = customTitle.replace(/[&<>]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[ch]));
-                        if (/<title[\s>]/i.test(html)) {
-                            html = html.replace(/<title[^>]*>[\s\S]*?<\/title>/i, `<title>${safeTitle}</title>`);
-                        } else {
-                            html = html.replace(/<head[^>]*>/i, match => `${match}<title>${safeTitle}</title>`);
-                        }
-                    }
-
-                    const controlStyles = `
-<meta charset="UTF-8">
-<style id="__theme-style__"></style>
-<style id="__font-face-ctrl__"></style>
-<style id="__font-family-ctrl__"></style>
-<style id="__font-ctrl__"></style>
-<style id="__row-height-ctrl__"></style>
-<style id="__index-col-width-ctrl__"></style>
-<style id="__border-ctrl__"></style>`;
-                    if (/<\/head>/i.test(html)) {
-                        html = html.replace(/<\/head>/i, `${controlStyles}\n</head>`);
-                    } else {
-                        html = `${controlStyles}\n${html}`;
-                    }
-
-                    const linkScript = `<script>
-(function(){
-  var base=${JSON.stringify(cleanBaseUrl)};
-  document.querySelectorAll('a').forEach(function(link){
-    var href=link.getAttribute('href');
-    if(!href||/^https?:/i.test(href)||/^mailto:/i.test(href)||href.charAt(0)==='#'||/^data:/i.test(href)) return;
-    if(base){
-      var norm=href.replace(/\\\\/g,'/');
-      try{norm=decodeURIComponent(norm);}catch(err){}
-      var parts=norm.split('/');
-      var fn=parts.pop();
-      var folder=parts.join('/');
-      link.setAttribute('href',base+'?'+(folder?'folder='+encodeURIComponent(folder)+'&':'')+'file='+encodeURIComponent(fn));
-    }
-    link.setAttribute('target','_blank');
-  });
-})();
-<\/script>`;
-                    if (/<\/body>/i.test(html)) {
-                        html = html.replace(/<\/body>/i, `${linkScript}\n</body>`);
-                    } else {
-                        html += linkScript;
-                    }
-
-                    baseHtmlForDownload = html;
-                    currentLiveTheme = 'none';
-                    document.getElementById('liveThemeSelect').value = 'none';
-                    currentFont = 'default';
-                    document.getElementById('fontSelect').value = 'default';
-                    fontSizeCtrlActive = false;
-                    rowHeightCtrlActive = false;
-                    borderCtrlActive = false;
-                    iframe.srcdoc = html;
-                    placeholder.classList.add('hidden');
-                    iframe.classList.remove('hidden');
-                    updateDownloadBlob();
-                    actionPanel.classList.remove('hidden');
-                    return;
-                }
-
                 const parser = new DOMParser();
                 const doc    = parser.parseFromString(e.target.result, 'text/html');
 
@@ -645,7 +574,6 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
                     }
                 });
 
-                const chosenTheme = document.getElementById('liveThemeSelect').value;
                 // 2. Google 字體
                 if (!doc.head.querySelector('link[href*="fonts.googleapis.com"]')) {
                     const fl = doc.createElement('link');
@@ -853,6 +781,7 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
                 });
 
                 // 3b. 移除 Word 所有行內顏色格式（非 none 主題：螢光底色、紅字等一併清除）
+                const chosenTheme = document.getElementById('liveThemeSelect').value;
                 if (chosenTheme !== 'none') {
                     doc.querySelectorAll('*').forEach(el => {
                         el.removeAttribute('bgcolor');
@@ -932,6 +861,7 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
                         el.classList.add('theme-page-title');
                     }
                 });
+
                 // 4. 自訂標題
                 const customTitle = document.getElementById('titleInput').value.trim();
                 if (customTitle) doc.title = customTitle;
@@ -968,7 +898,6 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
                 currentFont = 'default';
                 document.getElementById('fontSelect').value = 'default';
                 headingIdx = 4; bodyIdx = 4;
-                fontSizeCtrlActive = false;
                 document.getElementById('headingSizeDisplay').textContent = HEADING_SIZES[headingIdx];
                 document.getElementById('bodySizeDisplay').textContent    = BODY_SIZES[bodyIdx];
 
