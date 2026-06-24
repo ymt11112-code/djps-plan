@@ -4,14 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>課程計畫 HTML 檢視與連結設定工具</title>
-    
-    <!-- 引入 Tailwind CSS 用於介面美化 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-    
     <style>
         body { font-family: 'Noto Sans TC', sans-serif; }
-        /* iframe 隱藏預設邊框 */
         iframe { border: none; }
     </style>
 </head>
@@ -29,14 +25,14 @@
             </div>
             <div id="settingsPanel">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 bg-blue-50 p-5 rounded-lg border border-blue-100">
-                
+
                 <!-- 步驟 1：連結設定 -->
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-2">
                         1. 設定基礎網址 (Google Apps Script)
                     </label>
-                    <input type="text" id="baseUrl" 
-                           placeholder="例如: https://script.google.com/.../exec" 
+                    <input type="text" id="baseUrl"
+                           placeholder="例如: https://script.google.com/.../exec"
                            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 shadow-sm text-sm">
                 </div>
 
@@ -46,7 +42,7 @@
                         2. 上傳從 Word 存出的網頁檔
                     </label>
                     <div class="flex items-center gap-2">
-                        <input type="file" id="fileInput" accept=".htm,.html" 
+                        <input type="file" id="fileInput" accept=".htm,.html"
                                class="block w-full text-sm text-gray-500
                                       file:mr-2 file:py-2 file:px-4
                                       file:rounded-md file:border-0
@@ -67,10 +63,26 @@
                     </label>
                     <div class="flex items-center gap-2">
                         <select id="themeSelect" class="w-full border border-gray-300 text-sm rounded-md px-3 py-2">
-                            <option value="blue">🟦 專業藍 (推薦)</option>
-                            <option value="green">🟩 典雅綠</option>
-                            <option value="orange">🟧 溫暖橘</option>
-                            <option value="none">⚪ 保留 Word 原始樣式</option>
+                            <optgroup label="── 單色系 ──">
+                                <option value="blue">🟦 專業藍（推薦）</option>
+                                <option value="green">🟩 典雅綠</option>
+                                <option value="orange">🟧 溫暖橘</option>
+                                <option value="red">🟥 活力紅</option>
+                                <option value="purple">🟪 柔和紫</option>
+                                <option value="teal">🩵 清新青</option>
+                            </optgroup>
+                            <optgroup label="── 專業版 ──">
+                                <option value="pro-gradient">✨ 漸層藍（商務）</option>
+                                <option value="pro-dark">🌑 夜幕深色</option>
+                            </optgroup>
+                            <optgroup label="── 活潑版 ──">
+                                <option value="fun-coral">🌸 珊瑚活力</option>
+                                <option value="fun-mint">🌿 薄荷清新</option>
+                                <option value="fun-yellow">☀️ 陽光黃</option>
+                            </optgroup>
+                            <optgroup label="── 其他 ──">
+                                <option value="none">⚪ 保留 Word 原始樣式</option>
+                            </optgroup>
                         </select>
                         <button id="renderBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-md shadow transition duration-150 whitespace-nowrap">
                             套用並顯示
@@ -90,21 +102,19 @@
             </div>
             </div><!-- /settingsPanel -->
 
-            <!-- 動作面板 (預設隱藏，處理完成後顯示) -->
+            <!-- 動作面板 -->
             <div id="actionPanel" class="mt-4 hidden flex items-center gap-4 bg-green-50 p-4 rounded-md border border-green-200">
                 <span class="text-green-800 font-medium flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                     處理成功！您可以：
                 </span>
-                <!-- 另開視窗連結 -->
                 <a id="openTabBtn" href="#" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2 px-4 rounded shadow transition duration-150">
                     ↗️ 另開視窗全螢幕瀏覽
                 </a>
-                <!-- 下載檔案連結 -->
                 <a id="downloadBtn" href="#" download="調整後的課程計畫首頁.html" class="bg-gray-800 hover:bg-gray-900 text-white text-sm font-bold py-2 px-4 rounded shadow transition duration-150">
-                    💾 下載處理後的網頁 (供上傳至伺服器)
+                    💾 下載處理後的網頁
                 </a>
-                <!-- 字型大小與格線控制 -->
+                <!-- 右側調整控制列 -->
                 <div class="ml-auto flex flex-col gap-1.5 border-l border-green-300 pl-4">
                     <div class="flex items-center gap-2">
                         <span class="text-gray-600 text-xs font-medium w-8 shrink-0">標題：</span>
@@ -117,6 +127,12 @@
                         <button id="bodyDecBtn" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-800 font-bold py-0.5 px-2.5 rounded shadow-sm text-sm">A－</button>
                         <span id="bodySizeDisplay" class="text-xs font-mono w-12 text-center border border-gray-200 bg-white rounded py-0.5">14px</span>
                         <button id="bodyIncBtn" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-800 font-bold py-0.5 px-2.5 rounded shadow-sm text-sm">A＋</button>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-gray-600 text-xs font-medium w-8 shrink-0">行高：</span>
+                        <button id="rowHeightDecBtn" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-800 font-bold py-0.5 px-2.5 rounded shadow-sm text-sm">矮－</button>
+                        <span id="rowHeightDisplay" class="text-xs font-mono w-12 text-center border border-gray-200 bg-white rounded py-0.5">8px</span>
+                        <button id="rowHeightIncBtn" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-800 font-bold py-0.5 px-2.5 rounded shadow-sm text-sm">高＋</button>
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="text-gray-600 text-xs font-medium w-8 shrink-0">格線：</span>
@@ -132,183 +148,326 @@
 
     <!-- 預覽畫面區 -->
     <div class="flex-grow w-full relative bg-white">
-        <!-- 尚未上傳時的提示 -->
         <div id="placeholder" class="absolute inset-0 flex items-center justify-center text-gray-400 flex-col">
             <svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
             <p class="text-lg">請完成上方三個步驟，並點擊「套用並顯示」</p>
         </div>
-        
         <iframe id="previewFrame" class="w-full h-full absolute inset-0 hidden"></iframe>
     </div>
 
     <script>
-        // 定義不同風格的 CSS 注入代碼，加入 :not(.theme-header-cell) 避免斑馬紋覆蓋標題深色
+        // ═══════════════════════════════════════════════════
+        // 主題 CSS 定義
+        // ═══════════════════════════════════════════════════
         const themes = {
+
+            // ── 單色系 ──────────────────────────────────────
             blue: `
-                body { font-family: 'Noto Sans TC', sans-serif !important; padding: 20px; background: #f4f7f6; color: #333; line-height: 1.6; overflow-x: hidden; }
-                table { width: 100% !important; border-collapse: collapse !important; background: #fff; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; word-wrap: break-word; }
-                td, th { padding: 8px 12px !important; border: 1px solid #e5e7eb !important; text-align: left; word-break: break-word; overflow-wrap: break-word; line-height: 1.6; }
-                tr:first-child td, thead td, th { background-color: #1e3a8a !important; color: #ffffff !important; font-weight: bold !important; }
-                tr:first-child p, tr:first-child span { color: #ffffff !important; }
-                tr:nth-child(even):not(:first-child) td:not(.theme-header-cell) { background-color: #f8fafc !important; }
-                tr:hover:not(:first-child) td:not(.theme-header-cell) { background-color: #eff6ff !important; }
-                a { color: #2563eb !important; text-decoration: none !important; font-weight: bold !important; }
-                a:hover { text-decoration: underline !important; color: #1d4ed8 !important; }
-                
-                td.theme-header-cell { background-color: #1e3a8a !important; color: #ffffff !important; font-weight: bold !important; }
-                td.theme-header-cell * { color: #ffffff !important; }
+                body { font-family:'Noto Sans TC',sans-serif !important; padding:20px; background:#f4f7f6; color:#333; line-height:1.6; overflow-x:hidden; }
+                table { width:100% !important; border-collapse:collapse !important; background:#fff; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1); border-radius:8px; overflow:hidden; word-wrap:break-word; }
+                td, th { padding:8px 12px !important; border:1px solid #e5e7eb !important; text-align:left; word-break:break-word; overflow-wrap:break-word; line-height:1.6; }
+                tr:first-child td, thead td, th { background-color:#1e3a8a !important; color:#fff !important; font-weight:bold !important; }
+                tr:first-child p, tr:first-child span { color:#fff !important; }
+                tr:nth-child(even):not(:first-child) td:not(.theme-header-cell) { background-color:#f8fafc !important; }
+                tr:hover:not(:first-child) td:not(.theme-header-cell) { background-color:#eff6ff !important; }
+                a { color:#2563eb !important; text-decoration:none !important; font-weight:bold !important; }
+                a:hover { text-decoration:underline !important; color:#1d4ed8 !important; }
+                td.theme-header-cell { background-color:#1e3a8a !important; color:#fff !important; font-weight:bold !important; }
+                td.theme-header-cell * { color:#fff !important; }
             `,
             green: `
-                body { font-family: 'Noto Sans TC', sans-serif !important; padding: 20px; background: #f0fdf4; color: #333; line-height: 1.6; overflow-x: hidden; }
-                table { width: 100% !important; border-collapse: collapse !important; background: #fff; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); word-wrap: break-word; }
-                td, th { padding: 8px 12px !important; border: 1px solid #d1fae5 !important; text-align: left; word-break: break-word; overflow-wrap: break-word; line-height: 1.6; }
-                tr:first-child td, thead td, th { background-color: #065f46 !important; color: #ffffff !important; font-weight: bold !important; border-color: #065f46 !important; }
-                tr:first-child p, tr:first-child span { color: #ffffff !important; }
-                tr:nth-child(even):not(:first-child) td:not(.theme-header-cell) { background-color: #ecfdf5 !important; }
-                tr:hover:not(:first-child) td:not(.theme-header-cell) { background-color: #d1fae5 !important; }
-                a { color: #059669 !important; text-decoration: none !important; font-weight: bold !important; }
-                a:hover { text-decoration: underline !important; color: #047857 !important; }
-                
-                td.theme-header-cell { background-color: #065f46 !important; color: #ffffff !important; font-weight: bold !important; border-color: #065f46 !important; }
-                td.theme-header-cell * { color: #ffffff !important; }
+                body { font-family:'Noto Sans TC',sans-serif !important; padding:20px; background:#f0fdf4; color:#333; line-height:1.6; overflow-x:hidden; }
+                table { width:100% !important; border-collapse:collapse !important; background:#fff; margin-bottom:20px; box-shadow:0 2px 4px rgba(0,0,0,0.05); word-wrap:break-word; }
+                td, th { padding:8px 12px !important; border:1px solid #d1fae5 !important; text-align:left; word-break:break-word; overflow-wrap:break-word; line-height:1.6; }
+                tr:first-child td, thead td, th { background-color:#065f46 !important; color:#fff !important; font-weight:bold !important; border-color:#065f46 !important; }
+                tr:first-child p, tr:first-child span { color:#fff !important; }
+                tr:nth-child(even):not(:first-child) td:not(.theme-header-cell) { background-color:#ecfdf5 !important; }
+                tr:hover:not(:first-child) td:not(.theme-header-cell) { background-color:#d1fae5 !important; }
+                a { color:#059669 !important; text-decoration:none !important; font-weight:bold !important; }
+                a:hover { text-decoration:underline !important; color:#047857 !important; }
+                td.theme-header-cell { background-color:#065f46 !important; color:#fff !important; font-weight:bold !important; border-color:#065f46 !important; }
+                td.theme-header-cell * { color:#fff !important; }
             `,
             orange: `
-                body { font-family: 'Noto Sans TC', sans-serif !important; padding: 20px; background: #fff7ed; color: #333; line-height: 1.6; overflow-x: hidden; }
-                table { width: 100% !important; border-collapse: collapse !important; background: #fff; margin-bottom: 20px; border: 2px solid #fdba74 !important; word-wrap: break-word; }
-                td, th { padding: 8px 12px !important; border: 1px solid #fed7aa !important; text-align: left; word-break: break-word; overflow-wrap: break-word; line-height: 1.6; }
-                tr:first-child td, thead td, th { background-color: #c2410c !important; color: #ffffff !important; font-weight: bold !important; }
-                tr:first-child p, tr:first-child span { color: #ffffff !important; }
-                tr:nth-child(even):not(:first-child) td:not(.theme-header-cell) { background-color: #ffedd5 !important; }
-                tr:hover:not(:first-child) td:not(.theme-header-cell) { background-color: #fed7aa !important; }
-                a { color: #ea580c !important; text-decoration: none !important; font-weight: bold !important; }
-                a:hover { text-decoration: underline !important; color: #c2410c !important; }
-                
-                td.theme-header-cell { background-color: #c2410c !important; color: #ffffff !important; font-weight: bold !important; }
-                td.theme-header-cell * { color: #ffffff !important; }
+                body { font-family:'Noto Sans TC',sans-serif !important; padding:20px; background:#fff7ed; color:#333; line-height:1.6; overflow-x:hidden; }
+                table { width:100% !important; border-collapse:collapse !important; background:#fff; margin-bottom:20px; border:2px solid #fdba74 !important; word-wrap:break-word; }
+                td, th { padding:8px 12px !important; border:1px solid #fed7aa !important; text-align:left; word-break:break-word; overflow-wrap:break-word; line-height:1.6; }
+                tr:first-child td, thead td, th { background-color:#c2410c !important; color:#fff !important; font-weight:bold !important; }
+                tr:first-child p, tr:first-child span { color:#fff !important; }
+                tr:nth-child(even):not(:first-child) td:not(.theme-header-cell) { background-color:#ffedd5 !important; }
+                tr:hover:not(:first-child) td:not(.theme-header-cell) { background-color:#fed7aa !important; }
+                a { color:#ea580c !important; text-decoration:none !important; font-weight:bold !important; }
+                a:hover { text-decoration:underline !important; color:#c2410c !important; }
+                td.theme-header-cell { background-color:#c2410c !important; color:#fff !important; font-weight:bold !important; }
+                td.theme-header-cell * { color:#fff !important; }
+            `,
+            red: `
+                body { font-family:'Noto Sans TC',sans-serif !important; padding:20px; background:#fff5f5; color:#333; line-height:1.6; overflow-x:hidden; }
+                table { width:100% !important; border-collapse:collapse !important; background:#fff; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1); border-radius:8px; overflow:hidden; word-wrap:break-word; }
+                td, th { padding:8px 12px !important; border:1px solid #fecaca !important; text-align:left; word-break:break-word; overflow-wrap:break-word; line-height:1.6; }
+                tr:first-child td, thead td, th { background-color:#991b1b !important; color:#fff !important; font-weight:bold !important; }
+                tr:first-child p, tr:first-child span { color:#fff !important; }
+                tr:nth-child(even):not(:first-child) td:not(.theme-header-cell) { background-color:#fff5f5 !important; }
+                tr:hover:not(:first-child) td:not(.theme-header-cell) { background-color:#fee2e2 !important; }
+                a { color:#dc2626 !important; text-decoration:none !important; font-weight:bold !important; }
+                a:hover { text-decoration:underline !important; color:#991b1b !important; }
+                td.theme-header-cell { background-color:#991b1b !important; color:#fff !important; font-weight:bold !important; }
+                td.theme-header-cell * { color:#fff !important; }
+            `,
+            purple: `
+                body { font-family:'Noto Sans TC',sans-serif !important; padding:20px; background:#faf5ff; color:#333; line-height:1.6; overflow-x:hidden; }
+                table { width:100% !important; border-collapse:collapse !important; background:#fff; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1); border-radius:8px; overflow:hidden; word-wrap:break-word; }
+                td, th { padding:8px 12px !important; border:1px solid #e9d5ff !important; text-align:left; word-break:break-word; overflow-wrap:break-word; line-height:1.6; }
+                tr:first-child td, thead td, th { background-color:#6d28d9 !important; color:#fff !important; font-weight:bold !important; }
+                tr:first-child p, tr:first-child span { color:#fff !important; }
+                tr:nth-child(even):not(:first-child) td:not(.theme-header-cell) { background-color:#f5f3ff !important; }
+                tr:hover:not(:first-child) td:not(.theme-header-cell) { background-color:#ede9fe !important; }
+                a { color:#7c3aed !important; text-decoration:none !important; font-weight:bold !important; }
+                a:hover { text-decoration:underline !important; color:#6d28d9 !important; }
+                td.theme-header-cell { background-color:#6d28d9 !important; color:#fff !important; font-weight:bold !important; }
+                td.theme-header-cell * { color:#fff !important; }
+            `,
+            teal: `
+                body { font-family:'Noto Sans TC',sans-serif !important; padding:20px; background:#f0fdfa; color:#333; line-height:1.6; overflow-x:hidden; }
+                table { width:100% !important; border-collapse:collapse !important; background:#fff; margin-bottom:20px; box-shadow:0 1px 4px rgba(0,0,0,0.08); border-radius:8px; overflow:hidden; word-wrap:break-word; }
+                td, th { padding:8px 12px !important; border:1px solid #99f6e4 !important; text-align:left; word-break:break-word; overflow-wrap:break-word; line-height:1.6; }
+                tr:first-child td, thead td, th { background-color:#0f766e !important; color:#fff !important; font-weight:bold !important; }
+                tr:first-child p, tr:first-child span { color:#fff !important; }
+                tr:nth-child(even):not(:first-child) td:not(.theme-header-cell) { background-color:#f0fdfa !important; }
+                tr:hover:not(:first-child) td:not(.theme-header-cell) { background-color:#ccfbf1 !important; }
+                a { color:#0d9488 !important; text-decoration:none !important; font-weight:bold !important; }
+                a:hover { text-decoration:underline !important; color:#0f766e !important; }
+                td.theme-header-cell { background-color:#0f766e !important; color:#fff !important; font-weight:bold !important; }
+                td.theme-header-cell * { color:#fff !important; }
+            `,
+
+            // ── 專業版 ──────────────────────────────────────
+            'pro-gradient': `
+                body { font-family:'Noto Sans TC',sans-serif !important; padding:20px; background:#f0f4f8; color:#1e293b; line-height:1.6; overflow-x:hidden; }
+                table { width:100% !important; border-collapse:collapse !important; background:#fff; margin-bottom:20px; box-shadow:0 4px 16px rgba(30,58,138,0.12); border-radius:10px; overflow:hidden; word-wrap:break-word; }
+                td, th { padding:8px 12px !important; border:1px solid #cbd5e1 !important; text-align:left; word-break:break-word; overflow-wrap:break-word; line-height:1.6; }
+                tr:first-child td, thead td, th { background:linear-gradient(135deg,#1e3a8a 0%,#2563eb 100%) !important; color:#fff !important; font-weight:bold !important; border-color:#2563eb !important; }
+                tr:first-child p, tr:first-child span { color:#fff !important; }
+                tr:nth-child(even):not(:first-child) td:not(.theme-header-cell) { background-color:#f8fafc !important; }
+                tr:hover:not(:first-child) td:not(.theme-header-cell) { background-color:#dbeafe !important; }
+                a { color:#1d4ed8 !important; text-decoration:none !important; font-weight:bold !important; }
+                a:hover { text-decoration:underline !important; color:#1e40af !important; }
+                td.theme-header-cell { background:linear-gradient(135deg,#1e3a8a 0%,#2563eb 100%) !important; color:#fff !important; font-weight:bold !important; border-color:#2563eb !important; }
+                td.theme-header-cell * { color:#fff !important; }
+            `,
+            'pro-dark': `
+                body { font-family:'Noto Sans TC',sans-serif !important; padding:20px; background:#f1f5f9; color:#1e293b; line-height:1.6; overflow-x:hidden; }
+                table { width:100% !important; border-collapse:collapse !important; background:#fff; margin-bottom:20px; box-shadow:0 2px 10px rgba(0,0,0,0.18); border-radius:8px; overflow:hidden; word-wrap:break-word; }
+                td, th { padding:8px 12px !important; border:1px solid #e2e8f0 !important; text-align:left; word-break:break-word; overflow-wrap:break-word; line-height:1.6; }
+                tr:first-child td, thead td, th { background-color:#0f172a !important; color:#e2e8f0 !important; font-weight:bold !important; letter-spacing:0.04em; }
+                tr:first-child p, tr:first-child span { color:#e2e8f0 !important; }
+                tr:nth-child(even):not(:first-child) td:not(.theme-header-cell) { background-color:#f8fafc !important; }
+                tr:hover:not(:first-child) td:not(.theme-header-cell) { background-color:#e2e8f0 !important; }
+                a { color:#0369a1 !important; text-decoration:none !important; font-weight:bold !important; }
+                a:hover { text-decoration:underline !important; color:#075985 !important; }
+                td.theme-header-cell { background-color:#1e293b !important; color:#e2e8f0 !important; font-weight:bold !important; letter-spacing:0.04em; }
+                td.theme-header-cell * { color:#e2e8f0 !important; }
+            `,
+
+            // ── 活潑版 ──────────────────────────────────────
+            'fun-coral': `
+                body { font-family:'Noto Sans TC',sans-serif !important; padding:20px; background:#fff8f8; color:#333; line-height:1.6; overflow-x:hidden; }
+                table { width:100% !important; border-collapse:collapse !important; background:#fff; margin-bottom:20px; box-shadow:0 2px 10px rgba(244,63,94,0.12); border-radius:12px; overflow:hidden; word-wrap:break-word; border:2px solid #fda4af !important; }
+                td, th { padding:8px 12px !important; border:1px solid #fda4af !important; text-align:left; word-break:break-word; overflow-wrap:break-word; line-height:1.6; }
+                tr:first-child td, thead td, th { background-color:#e11d48 !important; color:#fff !important; font-weight:bold !important; }
+                tr:first-child p, tr:first-child span { color:#fff !important; }
+                tr:nth-child(even):not(:first-child) td:not(.theme-header-cell) { background-color:#fff1f2 !important; }
+                tr:hover:not(:first-child) td:not(.theme-header-cell) { background-color:#ffe4e6 !important; }
+                a { color:#e11d48 !important; text-decoration:none !important; font-weight:bold !important; }
+                a:hover { text-decoration:underline !important; color:#be123c !important; }
+                td.theme-header-cell { background-color:#e11d48 !important; color:#fff !important; font-weight:bold !important; }
+                td.theme-header-cell * { color:#fff !important; }
+            `,
+            'fun-mint': `
+                body { font-family:'Noto Sans TC',sans-serif !important; padding:20px; background:#f0fdf9; color:#134e4a; line-height:1.6; overflow-x:hidden; }
+                table { width:100% !important; border-collapse:collapse !important; background:#fff; margin-bottom:20px; box-shadow:0 2px 10px rgba(16,185,129,0.12); border-radius:12px; overflow:hidden; word-wrap:break-word; border:2px solid #6ee7b7 !important; }
+                td, th { padding:8px 12px !important; border:1px solid #6ee7b7 !important; text-align:left; word-break:break-word; overflow-wrap:break-word; line-height:1.6; }
+                tr:first-child td, thead td, th { background-color:#059669 !important; color:#fff !important; font-weight:bold !important; }
+                tr:first-child p, tr:first-child span { color:#fff !important; }
+                tr:nth-child(even):not(:first-child) td:not(.theme-header-cell) { background-color:#ecfdf5 !important; }
+                tr:hover:not(:first-child) td:not(.theme-header-cell) { background-color:#d1fae5 !important; }
+                a { color:#059669 !important; text-decoration:none !important; font-weight:bold !important; }
+                a:hover { text-decoration:underline !important; color:#047857 !important; }
+                td.theme-header-cell { background-color:#059669 !important; color:#fff !important; font-weight:bold !important; }
+                td.theme-header-cell * { color:#fff !important; }
+            `,
+            'fun-yellow': `
+                body { font-family:'Noto Sans TC',sans-serif !important; padding:20px; background:#fffbeb; color:#333; line-height:1.6; overflow-x:hidden; }
+                table { width:100% !important; border-collapse:collapse !important; background:#fff; margin-bottom:20px; box-shadow:0 2px 10px rgba(245,158,11,0.15); border-radius:12px; overflow:hidden; word-wrap:break-word; border:2px solid #fcd34d !important; }
+                td, th { padding:8px 12px !important; border:1px solid #fcd34d !important; text-align:left; word-break:break-word; overflow-wrap:break-word; line-height:1.6; }
+                tr:first-child td, thead td, th { background-color:#d97706 !important; color:#fff !important; font-weight:bold !important; }
+                tr:first-child p, tr:first-child span { color:#fff !important; }
+                tr:nth-child(even):not(:first-child) td:not(.theme-header-cell) { background-color:#fffbeb !important; }
+                tr:hover:not(:first-child) td:not(.theme-header-cell) { background-color:#fef3c7 !important; }
+                a { color:#b45309 !important; text-decoration:none !important; font-weight:bold !important; }
+                a:hover { text-decoration:underline !important; color:#92400e !important; }
+                td.theme-header-cell { background-color:#d97706 !important; color:#fff !important; font-weight:bold !important; }
+                td.theme-header-cell * { color:#fff !important; }
             `
         };
 
-        // 保存前一個產生的 Blob URL (為了釋放記憶體)
+        // ═══════════════════════════════════════════════════
+        // 狀態變數
+        // ═══════════════════════════════════════════════════
         let previousObjectUrl = null;
-        // 儲存不含字型控制樣式的基底 HTML，供下載時動態注入
         let baseHtmlForDownload = null;
 
-        // 字型大小控制（10 級可調）
+        // 字型大小
         const HEADING_SIZES = [12, 13, 14, 15, 16, 18, 20, 22, 24, 28];
         const BODY_SIZES    = [10, 11, 12, 13, 14, 15, 16, 18, 20, 22];
-        let headingIdx = 4; // 預設第5級 = 16px
-        let bodyIdx    = 4; // 預設第5級 = 14px
+        let headingIdx = 4;
+        let bodyIdx    = 4;
 
-        // 格線控制
+        // 行高（垂直 padding）
+        const ROW_PADDINGS = [2, 4, 6, 8, 10, 12, 16, 20, 24];
+        let rowPaddingIdx = 3; // 預設 8px
+        let rowHeightCtrlActive = false;
+
+        // 格線
         const BORDER_WIDTHS = [0.5, 1, 1.5, 2, 3];
-        let borderWidthIdx = 1; // 預設 1px
+        let borderWidthIdx = 1;
         let borderColor = '#d1d5db';
         let borderCtrlActive = false;
+
+        // ═══════════════════════════════════════════════════
+        // CSS 產生函式
+        // ═══════════════════════════════════════════════════
+        function getFontCtrlCSS() {
+            const h = HEADING_SIZES[headingIdx];
+            const b = BODY_SIZES[bodyIdx];
+            return `
+                th, tr:first-child td, td.theme-header-cell, h1, h2, h3, h4, h5, h6,
+                .theme-page-title, .theme-page-title * { font-size:${h}px !important; }
+                td:not(.theme-header-cell), p:not(.theme-page-title), li, span:not(.theme-page-title *),
+                div:not(.theme-page-title) { font-size:${b}px !important; }
+            `;
+        }
+
+        function getRowHeightCSS() {
+            if (!rowHeightCtrlActive) return '';
+            const p = ROW_PADDINGS[rowPaddingIdx];
+            return `td, th { padding-top:${p}px !important; padding-bottom:${p}px !important; }`;
+        }
 
         function getBorderCtrlCSS() {
             if (!borderCtrlActive) return '';
             const w = BORDER_WIDTHS[borderWidthIdx];
             const c = borderColor;
-            return `table { border: ${w}px solid ${c} !important; } td, th { border: ${w}px solid ${c} !important; }`;
-        }
-
-        function getFontCtrlCSS() {
-            const h = HEADING_SIZES[headingIdx];
-            const b = BODY_SIZES[bodyIdx];
-            return `
-                    th, tr:first-child td, td.theme-header-cell, h1, h2, h3, h4, h5, h6,
-                    .theme-page-title, .theme-page-title * { font-size: ${h}px !important; }
-                    td:not(.theme-header-cell), p:not(.theme-page-title), li, span:not(.theme-page-title *),
-                    div:not(.theme-page-title) { font-size: ${b}px !important; }
-                `;
+            return `table { border:${w}px solid ${c} !important; } td, th { border:${w}px solid ${c} !important; }`;
         }
 
         function updateDownloadBlob() {
             if (!baseHtmlForDownload) return;
             if (previousObjectUrl) URL.revokeObjectURL(previousObjectUrl);
-            const htmlWithFont = baseHtmlForDownload.replace('</head>',
-                `<style id="__font-ctrl__">${getFontCtrlCSS()}</style>\n<style id="__border-ctrl__">${getBorderCtrlCSS()}</style>\n</head>`);
-            const blob = new Blob([htmlWithFont], { type: 'text/html;charset=utf-8' });
+            const html = baseHtmlForDownload.replace('</head>',
+                `<style id="__font-ctrl__">${getFontCtrlCSS()}</style>\n` +
+                `<style id="__row-height-ctrl__">${getRowHeightCSS()}</style>\n` +
+                `<style id="__border-ctrl__">${getBorderCtrlCSS()}</style>\n</head>`);
+            const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
             const objectUrl = URL.createObjectURL(blob);
             previousObjectUrl = objectUrl;
             document.getElementById('openTabBtn').href = objectUrl;
             document.getElementById('downloadBtn').href = objectUrl;
         }
 
-        document.getElementById('renderBtn').addEventListener('click', () => {
-            const fileInput = document.getElementById('fileInput');
-            let rawBaseUrl = document.getElementById('baseUrl').value.trim();
-            const encoding = document.getElementById('encoding').value;
-            const theme = document.getElementById('themeSelect').value;
-            
+        // 更新 iframe 內的 style 標籤
+        function updateIframeStyle(id, css) {
             const iframe = document.getElementById('previewFrame');
-            const placeholder = document.getElementById('placeholder');
-            const actionPanel = document.getElementById('actionPanel');
+            if (!iframe.contentDocument || !iframe.contentDocument.head) return;
+            let el = iframe.contentDocument.getElementById(id);
+            if (!el) {
+                el = iframe.contentDocument.createElement('style');
+                el.id = id;
+                iframe.contentDocument.head.appendChild(el);
+            }
+            el.innerHTML = css;
+        }
+
+        // ═══════════════════════════════════════════════════
+        // 套用函式
+        // ═══════════════════════════════════════════════════
+        function applyFontSize() {
+            document.getElementById('headingSizeDisplay').textContent = HEADING_SIZES[headingIdx] + 'px';
+            document.getElementById('bodySizeDisplay').textContent    = BODY_SIZES[bodyIdx] + 'px';
+            updateIframeStyle('__font-ctrl__', getFontCtrlCSS());
+            updateDownloadBlob();
+        }
+
+        function applyRowHeight() {
+            rowHeightCtrlActive = true;
+            document.getElementById('rowHeightDisplay').textContent = ROW_PADDINGS[rowPaddingIdx] + 'px';
+            updateIframeStyle('__row-height-ctrl__', getRowHeightCSS());
+            updateDownloadBlob();
+        }
+
+        function applyBorderStyle() {
+            borderCtrlActive = true;
+            document.getElementById('borderWidthDisplay').textContent = BORDER_WIDTHS[borderWidthIdx] + 'px';
+            updateIframeStyle('__border-ctrl__', getBorderCtrlCSS());
+            updateDownloadBlob();
+        }
+
+        // ═══════════════════════════════════════════════════
+        // 主渲染邏輯
+        // ═══════════════════════════════════════════════════
+        document.getElementById('renderBtn').addEventListener('click', () => {
+            const fileInput  = document.getElementById('fileInput');
+            let rawBaseUrl   = document.getElementById('baseUrl').value.trim();
+            const encoding   = document.getElementById('encoding').value;
+            const theme      = document.getElementById('themeSelect').value;
+            const iframe     = document.getElementById('previewFrame');
+            const placeholder= document.getElementById('placeholder');
+            const actionPanel= document.getElementById('actionPanel');
 
             if (fileInput.files.length === 0) {
                 alert('請先選擇 .htm 或 .html 檔案！');
                 return;
             }
 
-            const file = fileInput.files[0];
+            const file   = fileInput.files[0];
             const reader = new FileReader();
 
-            // 清理網址：如果使用者連同 ?folder=&file= 一起複製貼上，我們先截斷它
             let cleanBaseUrl = rawBaseUrl;
-            if (cleanBaseUrl.includes('?')) {
-                cleanBaseUrl = cleanBaseUrl.split('?')[0];
-            }
+            if (cleanBaseUrl.includes('?')) cleanBaseUrl = cleanBaseUrl.split('?')[0];
 
             reader.onload = function(e) {
-                const htmlContent = e.target.result;
                 const parser = new DOMParser();
-                const doc = parser.parseFromString(htmlContent, 'text/html');
+                const doc    = parser.parseFromString(e.target.result, 'text/html');
 
-                // 1. 處理所有超連結 (套用 Google Apps Script 查詢參數邏輯)
-                const links = doc.querySelectorAll('a');
-                links.forEach(link => {
+                // 1. 處理超連結
+                doc.querySelectorAll('a').forEach(link => {
                     const href = link.getAttribute('href');
-                    
-                    // 排除絕對網址、信箱、錨點等不需要轉換的連結
-                    if (href && !href.startsWith('http') && !href.startsWith('mailto:') && !href.startsWith('#') && !href.startsWith('data:')) {
-                        
+                    if (href && !href.startsWith('http') && !href.startsWith('mailto:') &&
+                        !href.startsWith('#') && !href.startsWith('data:')) {
                         if (cleanBaseUrl) {
-                            // 將路徑中的反斜線 \ 統一換成正斜線 / (防止 Word 產生 Windows 風格路徑)
-                            let normalizedHref = href.replace(/\\/g, '/');
-                            
-                            // 先嘗試解碼，以免雙重編碼
-                            let decodedHref = normalizedHref;
-                            try { decodedHref = decodeURIComponent(normalizedHref); } catch(e) {}
-                            
-                            // 拆解路徑與檔名
-                            let parts = decodedHref.split('/');
-                            let fileName = parts.pop(); // 陣列最後一個元素一定是檔名
-                            let folderName = parts.join('/'); // 剩餘的組合起來就是資料夾 (如果沒有資料夾則為空字串)
-                            
-                            // 組合新的 GAS 網址
-                            let newHref = cleanBaseUrl + '?';
-                            if (folderName) {
-                                newHref += 'folder=' + encodeURIComponent(folderName) + '&';
-                            }
-                            newHref += 'file=' + encodeURIComponent(fileName);
-                            
+                            let norm = href.replace(/\\/g, '/');
+                            try { norm = decodeURIComponent(norm); } catch(e) {}
+                            const parts  = norm.split('/');
+                            const fn     = parts.pop();
+                            const folder = parts.join('/');
+                            let newHref  = cleanBaseUrl + '?';
+                            if (folder) newHref += 'folder=' + encodeURIComponent(folder) + '&';
+                            newHref += 'file=' + encodeURIComponent(fn);
                             link.setAttribute('href', newHref);
                         }
-                        // 強制另開視窗
                         link.setAttribute('target', '_blank');
                     }
                 });
 
-                // 2. 注入自訂字體 (Google Noto Sans TC)
+                // 2. Google 字體
                 if (!doc.head.querySelector('link[href*="fonts.googleapis.com"]')) {
-                    const fontLink = doc.createElement('link');
-                    fontLink.rel = 'stylesheet';
-                    fontLink.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap';
-                    doc.head.appendChild(fontLink);
+                    const fl = doc.createElement('link');
+                    fl.rel  = 'stylesheet';
+                    fl.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap';
+                    doc.head.appendChild(fl);
                 }
 
-                // 3. 注入美化 CSS 與表格欄位智慧分析
-                // 3a. 移除 Word 固定寬高，使表格自適應視窗（所有主題皆套用）
+                // 3a. 移除固定寬高，響應式（所有主題）
                 doc.querySelectorAll('table, col, colgroup').forEach(el => {
                     el.removeAttribute('width');
                     if (el.style) { el.style.width = ''; el.style.minWidth = ''; }
@@ -322,101 +481,76 @@
                     if (el.style) el.style.height = '';
                 });
                 const baseRespStyle = doc.createElement('style');
-                baseRespStyle.innerHTML = `body { overflow-x: hidden; } table { width: 100% !important; word-wrap: break-word; } td, th { word-break: break-word; overflow-wrap: break-word; }`;
+                baseRespStyle.innerHTML = `body{overflow-x:hidden;} table{width:100% !important;word-wrap:break-word;} td,th{word-break:break-word;overflow-wrap:break-word;}`;
                 doc.head.appendChild(baseRespStyle);
 
+                // 3b. 注入主題 CSS + 標題格偵測（非 none 主題）
                 if (theme !== 'none') {
-                    // 清除 Word 背景色，以免影響樣式套用
                     doc.querySelectorAll('td, th, tr').forEach(el => {
                         el.removeAttribute('bgcolor');
-                        if (el.style) {
-                            el.style.backgroundColor = '';
-                            el.style.background = '';
-                        }
+                        if (el.style) { el.style.backgroundColor = ''; el.style.background = ''; }
                     });
-                    
+
                     const styleTag = doc.createElement('style');
                     styleTag.innerHTML = themes[theme];
                     doc.head.appendChild(styleTag);
 
-                    // --- A 到 L 開頭的欄位自動變深色 ---
-                    const tables = doc.querySelectorAll('table');
-                    tables.forEach(table => {
-                        const rows = table.querySelectorAll('tr');
-                        
-                        rows.forEach((row, i) => {
-                            if (i === 0) return; // 第一列已有 CSS 預設為深色，不需另外處理
+                    // A~L 開頭欄位標記為 theme-header-cell，同列格子一起補色
+                    doc.querySelectorAll('table').forEach(table => {
+                        table.querySelectorAll('tr').forEach((row, i) => {
+                            if (i === 0) return;
 
                             for (let j = 0; j < row.cells.length; j++) {
-                                let cell = row.cells[j];
+                                const cell    = row.cells[j];
                                 if (!cell) continue;
+                                const rawText = cell.textContent || '';
+                                const match   = rawText.match(/[0-9０-９a-zA-Z一-龥Ａ-Ｚａ-ｚ]/);
+                                if (!match) continue;
 
-                                let rawText = cell.textContent || "";
-                                
-                                // 找尋字串中第一個有效文字 (加入數字，確保 1A, 2B 這種數字開頭的項目不會被當成英文字母開頭)
-                                let match = rawText.match(/[0-9\uFF10-\uFF19a-zA-Z\u4E00-\u9FA5\uFF21-\uFF3A\uFF41-\uFF5A]/);
-                                
-                                if (match) {
-                                    let firstChar = match[0];
-                                    let index = match.index;
-                                    
-                                    // 判斷是否為英文字母
-                                    let isLetter = /^[a-zA-Z\uFF21-\uFF3A\uFF41-\uFF5A]$/.test(firstChar);
-                                    
-                                    if (isLetter) {
-                                        let checkChar = firstChar.toUpperCase();
-                                        if (checkChar >= '\uFF21' && checkChar <= '\uFF3A') {
-                                            checkChar = String.fromCharCode(checkChar.charCodeAt(0) - 0xFEE0);
-                                        }
+                                const firstChar = match[0];
+                                const index     = match.index;
+                                const isLetter  = /^[a-zA-ZＡ-Ｚａ-ｚ]$/.test(firstChar);
+                                if (!isLetter) continue;
 
-                                        // 關鍵邏輯：將大寫字母範圍恢復設定為 A 到 L，涵蓋所有主要標題，G 也是深色。
-                                        if (checkChar >= 'A' && checkChar <= 'L') {
-                                            let restText = rawText.substring(index + 1);
-                                            let trimmedRest = restText.trim();
-                                            
-                                            // 排除子項目 (例如 f-1, F-2, g-1 等)，讓它們維持一般斑馬紋
-                                            if (/^[-－_.]\s*\d/.test(trimmedRest)) {
-                                                continue;
-                                            }
+                                let checkChar = firstChar.toUpperCase();
+                                if (checkChar >= 'Ａ' && checkChar <= 'Ｚ') {
+                                    checkChar = String.fromCharCode(checkChar.charCodeAt(0) - 0xFEE0);
+                                }
+                                if (checkChar < 'A' || checkChar > 'L') continue;
 
-                                            // 排除「化」字，例如避免 "E化教學" 被誤判
-                                            if (/^\u5316/.test(trimmedRest)) {
-                                                continue; 
-                                            }
-                                            
-                                            let isTitle = false;
-                                            
-                                            if (trimmedRest.length === 0) {
-                                                isTitle = true;
-                                            } else {
-                                                // 如果字母後方緊接的是「非英文/非數字」(例如是中文或符號)，就代表它是「標題」而不是普通單字
-                                                let nextCharMatch = restText.match(/[^\s\u2000-\u206F\uFEFF\u3000\xA0]/);
-                                                if (nextCharMatch) {
-                                                    let nextChar = nextCharMatch[0];
-                                                    if (!/^[a-zA-Z0-9\uFF21-\uFF3A\uFF41-\uFF5A\uFF10-\uFF19]$/.test(nextChar)) {
-                                                        isTitle = true;
-                                                    }
-                                                } else {
-                                                    isTitle = true;
-                                                }
-                                            }
+                                const restText    = rawText.substring(index + 1);
+                                const trimmedRest = restText.trim();
 
-                                            // 符合 A~L 的標題條件，設定深色 class
-                                            if (isTitle && rawText.length < 200) {
-                                                cell.classList.add('theme-header-cell');
-                                            }
-                                        }
+                                // 排除 f-1, g-1 等子項目
+                                if (/^[-－_.]\s*\d/.test(trimmedRest)) continue;
+                                // 排除「E化教學」等誤判
+                                if (/^化/.test(trimmedRest)) continue;
+
+                                let isTitle = (trimmedRest.length === 0);
+                                if (!isTitle) {
+                                    const nc = restText.match(/[^\s -⁯﻿　\xA0]/);
+                                    if (nc && !/^[a-zA-Z0-9Ａ-Ｚａ-ｚ０-９]$/.test(nc[0])) {
+                                        isTitle = true;
+                                    } else if (!nc) {
+                                        isTitle = true;
                                     }
                                 }
+
+                                if (isTitle && rawText.length < 200) {
+                                    cell.classList.add('theme-header-cell');
+                                }
+                            }
+
+                            // 同列有任何標題格 → 整列補深色
+                            if (Array.from(row.cells).some(c => c.classList.contains('theme-header-cell'))) {
+                                Array.from(row.cells).forEach(c => c.classList.add('theme-header-cell'));
                             }
                         });
                     });
                 }
 
-                // 3b. 偵測頁面主標題（含「學年度」或「課程計畫」且短於 80 字的段落/標題元素）
-                const titleCandidates = doc.querySelectorAll('p, h1, h2, h3, h4, h5, h6, div');
-                titleCandidates.forEach(el => {
-                    // 排除表格內的元素
+                // 3c. 偵測頁面主標題
+                doc.querySelectorAll('p, h1, h2, h3, h4, h5, h6, div').forEach(el => {
                     if (el.closest('table')) return;
                     const txt = el.textContent.trim();
                     if (txt.length > 0 && txt.length < 80 &&
@@ -427,129 +561,92 @@
                     }
                 });
 
-                // 4. 套用自訂標題
+                // 4. 自訂標題
                 const customTitle = document.getElementById('titleInput').value.trim();
                 if (customTitle) doc.title = customTitle;
 
-                // 4b. 儲存基底 HTML（不含字型控制樣式），供字型調整後重新產生下載檔
-                const metaCharset = doc.createElement('meta');
-                metaCharset.setAttribute('charset', 'UTF-8');
-                doc.head.insertBefore(metaCharset, doc.head.firstChild);
-                baseHtmlForDownload = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
+                // 4b. 儲存基底 HTML
+                const mc = doc.createElement('meta');
+                mc.setAttribute('charset', 'UTF-8');
+                doc.head.insertBefore(mc, doc.head.firstChild);
+                baseHtmlForDownload = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
 
-                // 4c. 注入字型大小樣式至 iframe 預覽用 HTML
+                // 4c. 注入動態控制 style 佔位（初始空白）
+                // 字型
                 const fontSizeStyle = doc.createElement('style');
-                fontSizeStyle.id = '__font-ctrl__';
+                fontSizeStyle.id    = '__font-ctrl__';
                 fontSizeStyle.innerHTML = getFontCtrlCSS();
                 doc.head.appendChild(fontSizeStyle);
 
-                // 4d. 初始化格線控制（每次重新套用時重設）
+                // 行高 — 重設
+                rowHeightCtrlActive = false;
+                rowPaddingIdx = 3;
+                document.getElementById('rowHeightDisplay').textContent = ROW_PADDINGS[rowPaddingIdx] + 'px';
+                const rowHStyle = doc.createElement('style');
+                rowHStyle.id    = '__row-height-ctrl__';
+                rowHStyle.innerHTML = '';
+                doc.head.appendChild(rowHStyle);
+
+                // 格線 — 重設
                 borderCtrlActive = false;
-                borderWidthIdx = 1;
-                borderColor = '#d1d5db';
+                borderWidthIdx   = 1;
+                borderColor      = '#d1d5db';
                 document.getElementById('borderColorPicker').value = borderColor;
                 document.getElementById('borderWidthDisplay').textContent = BORDER_WIDTHS[borderWidthIdx] + 'px';
-                const borderCtrlStyle = doc.createElement('style');
-                borderCtrlStyle.id = '__border-ctrl__';
-                borderCtrlStyle.innerHTML = '';
-                doc.head.appendChild(borderCtrlStyle);
+                const borderStyle = doc.createElement('style');
+                borderStyle.id    = '__border-ctrl__';
+                borderStyle.innerHTML = '';
+                doc.head.appendChild(borderStyle);
 
-                // 5. 更新 iframe 預覽
-                const finalHtmlString = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
-                iframe.srcdoc = finalHtmlString;
+                // 5. 更新 iframe
+                iframe.srcdoc = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
                 placeholder.classList.add('hidden');
                 iframe.classList.remove('hidden');
 
-                // 6. 產生 Blob URL（含目前字型設定），以供「直接瀏覽」與「下載」
+                // 6. Blob URL
                 updateDownloadBlob();
-
                 actionPanel.classList.remove('hidden');
             };
 
-            // 讀取檔案
             reader.readAsText(file, encoding);
         });
 
-        // 選擇檔案時自動讀取原始標題
+        // 選擇檔案時自動讀取標題
         document.getElementById('fileInput').addEventListener('change', function() {
             const file = this.files[0];
             if (!file) return;
-            const encoding = document.getElementById('encoding').value;
             const reader = new FileReader();
             reader.onload = function(e) {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(e.target.result, 'text/html');
-                if (doc.title) {
-                    document.getElementById('titleInput').value = doc.title;
-                }
+                const doc = new DOMParser().parseFromString(e.target.result, 'text/html');
+                if (doc.title) document.getElementById('titleInput').value = doc.title;
             };
-            reader.readAsText(file, encoding);
+            reader.readAsText(file, document.getElementById('encoding').value);
         });
 
-        function applyFontSize() {
-            document.getElementById('headingSizeDisplay').textContent = HEADING_SIZES[headingIdx] + 'px';
-            document.getElementById('bodySizeDisplay').textContent = BODY_SIZES[bodyIdx] + 'px';
-            const iframe = document.getElementById('previewFrame');
-            if (iframe.contentDocument && iframe.contentDocument.head) {
-                let styleEl = iframe.contentDocument.getElementById('__font-ctrl__');
-                if (!styleEl) {
-                    styleEl = iframe.contentDocument.createElement('style');
-                    styleEl.id = '__font-ctrl__';
-                    iframe.contentDocument.head.appendChild(styleEl);
-                }
-                styleEl.innerHTML = getFontCtrlCSS();
-            }
-            updateDownloadBlob();
-        }
+        // ═══════════════════════════════════════════════════
+        // 事件監聽
+        // ═══════════════════════════════════════════════════
+        document.getElementById('headingDecBtn').addEventListener('click', () => { if (headingIdx > 0) { headingIdx--; applyFontSize(); } });
+        document.getElementById('headingIncBtn').addEventListener('click', () => { if (headingIdx < HEADING_SIZES.length-1) { headingIdx++; applyFontSize(); } });
+        document.getElementById('bodyDecBtn').addEventListener('click',    () => { if (bodyIdx > 0) { bodyIdx--; applyFontSize(); } });
+        document.getElementById('bodyIncBtn').addEventListener('click',    () => { if (bodyIdx < BODY_SIZES.length-1) { bodyIdx++; applyFontSize(); } });
 
-        function applyBorderStyle() {
-            borderCtrlActive = true;
-            document.getElementById('borderWidthDisplay').textContent = BORDER_WIDTHS[borderWidthIdx] + 'px';
-            const iframe = document.getElementById('previewFrame');
-            if (iframe.contentDocument && iframe.contentDocument.head) {
-                let styleEl = iframe.contentDocument.getElementById('__border-ctrl__');
-                if (!styleEl) {
-                    styleEl = iframe.contentDocument.createElement('style');
-                    styleEl.id = '__border-ctrl__';
-                    iframe.contentDocument.head.appendChild(styleEl);
-                }
-                styleEl.innerHTML = getBorderCtrlCSS();
-            }
-            updateDownloadBlob();
-        }
+        document.getElementById('rowHeightDecBtn').addEventListener('click', () => { if (rowPaddingIdx > 0) { rowPaddingIdx--; applyRowHeight(); } });
+        document.getElementById('rowHeightIncBtn').addEventListener('click', () => { if (rowPaddingIdx < ROW_PADDINGS.length-1) { rowPaddingIdx++; applyRowHeight(); } });
 
-        document.getElementById('headingDecBtn').addEventListener('click', () => {
-            if (headingIdx > 0) { headingIdx--; applyFontSize(); }
-        });
-        document.getElementById('headingIncBtn').addEventListener('click', () => {
-            if (headingIdx < HEADING_SIZES.length - 1) { headingIdx++; applyFontSize(); }
-        });
-        document.getElementById('bodyDecBtn').addEventListener('click', () => {
-            if (bodyIdx > 0) { bodyIdx--; applyFontSize(); }
-        });
-        document.getElementById('bodyIncBtn').addEventListener('click', () => {
-            if (bodyIdx < BODY_SIZES.length - 1) { bodyIdx++; applyFontSize(); }
-        });
-        document.getElementById('borderDecBtn').addEventListener('click', () => {
-            if (borderWidthIdx > 0) { borderWidthIdx--; applyBorderStyle(); }
-        });
-        document.getElementById('borderIncBtn').addEventListener('click', () => {
-            if (borderWidthIdx < BORDER_WIDTHS.length - 1) { borderWidthIdx++; applyBorderStyle(); }
-        });
-        document.getElementById('borderColorPicker').addEventListener('input', (e) => {
-            borderColor = e.target.value;
-            applyBorderStyle();
-        });
+        document.getElementById('borderDecBtn').addEventListener('click',   () => { if (borderWidthIdx > 0) { borderWidthIdx--; applyBorderStyle(); } });
+        document.getElementById('borderIncBtn').addEventListener('click',   () => { if (borderWidthIdx < BORDER_WIDTHS.length-1) { borderWidthIdx++; applyBorderStyle(); } });
+        document.getElementById('borderColorPicker').addEventListener('input', (e) => { borderColor = e.target.value; applyBorderStyle(); });
 
-        // 收合／展開設定面板
+        // 收合設定面板
         document.getElementById('toggleSettingsBtn').addEventListener('click', () => {
-            const panel = document.getElementById('settingsPanel');
-            const arrow = document.getElementById('toggleArrow');
-            const label = document.getElementById('toggleLabel');
-            const isVisible = !panel.classList.contains('hidden');
-            panel.classList.toggle('hidden', isVisible);
-            arrow.style.transform = isVisible ? 'rotate(-90deg)' : '';
-            label.textContent = isVisible ? '展開設定' : '收合設定';
+            const panel   = document.getElementById('settingsPanel');
+            const arrow   = document.getElementById('toggleArrow');
+            const label   = document.getElementById('toggleLabel');
+            const visible = !panel.classList.contains('hidden');
+            panel.classList.toggle('hidden', visible);
+            arrow.style.transform = visible ? 'rotate(-90deg)' : '';
+            label.textContent     = visible ? '展開設定' : '收合設定';
         });
     </script>
 </body>
