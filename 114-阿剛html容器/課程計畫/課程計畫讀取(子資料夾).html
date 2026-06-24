@@ -578,54 +578,7 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
 
                 // 3a-2+3. 年級欄等寬 colgroup（含年級列 colspan 均等化）
                 const gradeRe = /^[一二三四五六七八九十]年級$/;
-                const normalizeLinkIndexTable = (table) => {
-                    const rows = Array.from(table.rows);
-                    if (!rows.length) return;
-
-                    const hasGradeRow = rows.some(row =>
-                        Array.from(row.cells).filter(cell => gradeRe.test(cell.textContent.trim())).length >= 2
-                    );
-                    const linkCount = table.querySelectorAll('a').length;
-                    if (!hasGradeRow && linkCount < 3) return;
-
-                    const maxCells = Math.max(...rows.map(row => row.cells.length));
-                    if (maxCells < 2) return;
-
-                    rows.forEach(row => {
-                        const cells = Array.from(row.cells);
-                        if (!cells.length) return;
-
-                        const gradeCells = cells.filter(cell => gradeRe.test(cell.textContent.trim()));
-                        if (gradeCells.length >= 2) {
-                            const base = Math.floor(maxCells / gradeCells.length);
-                            const rem = maxCells % gradeCells.length;
-                            gradeCells.forEach((cell, i) => {
-                                cell.colSpan = Math.max(1, base + (i < rem ? 1 : 0));
-                                cell.style.width = `${(100 / gradeCells.length).toFixed(3)}%`;
-                            });
-                            cells.forEach(cell => {
-                                if (!gradeCells.includes(cell) && cell.textContent.trim() === '') cell.remove();
-                            });
-                            return;
-                        }
-
-                        if (cells.length === 1) {
-                            cells[0].colSpan = maxCells;
-                            cells[0].style.width = '100%';
-                            return;
-                        }
-
-                        const base = Math.floor(maxCells / cells.length);
-                        const rem = maxCells % cells.length;
-                        cells.forEach((cell, i) => {
-                            cell.colSpan = Math.max(1, base + (i < rem ? 1 : 0));
-                            cell.style.width = `${(100 / cells.length).toFixed(3)}%`;
-                        });
-                    });
-                };
                 doc.querySelectorAll('table').forEach(table => {
-                    normalizeLinkIndexTable(table);
-
                     // ── 計算 maxCols ──
                     let maxCols = 0;
                     table.querySelectorAll('tr').forEach(row => {
