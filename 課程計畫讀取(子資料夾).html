@@ -115,7 +115,7 @@
                                 <option value="fun-candy">🍭 糖果彩虹</option>
                             </optgroup>
                             <optgroup label="── 其他 ──">
-                                <option value="none">⚪ 保留 Word 樣式</option>
+                                <option value="none" selected>⚪ 保留 Word 原始樣式</option>
                             </optgroup>
                         </select>
                     </div>
@@ -374,13 +374,14 @@
         // ═══════════════════════════════════════════════════
         let previousObjectUrl = null;
         let baseHtmlForDownload = null;
-        let currentLiveTheme = 'blue';
+        let currentLiveTheme = 'none';
 
         // 字型大小
         const HEADING_SIZES = [12, 13, 14, 15, 16, 18, 20, 22, 24, 28];
         const BODY_SIZES    = [10, 11, 12, 13, 14, 15, 16, 18, 20, 22];
         let headingIdx = 4;
         let bodyIdx    = 4;
+        let fontSizeCtrlActive = false;
 
         // 行高（垂直 padding）
         const ROW_PADDINGS = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24];
@@ -401,6 +402,7 @@
         // CSS 產生函式
         // ═══════════════════════════════════════════════════
         function getFontCtrlCSS() {
+            if (!fontSizeCtrlActive) return '';
             const h = HEADING_SIZES[headingIdx];
             const b = BODY_SIZES[bodyIdx];
             return `
@@ -485,6 +487,7 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
         // 套用函式
         // ═══════════════════════════════════════════════════
         function applyFontSize() {
+            fontSizeCtrlActive = true;
             document.getElementById('headingSizeDisplay').textContent = HEADING_SIZES[headingIdx];
             document.getElementById('bodySizeDisplay').textContent    = BODY_SIZES[bodyIdx];
             updateIframeStyle('__font-ctrl__', getFontCtrlCSS());
@@ -574,6 +577,9 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
                     }
                 });
 
+                const chosenTheme = document.getElementById('liveThemeSelect').value;
+                const preserveOriginalLayout = true;
+                if (!preserveOriginalLayout) {
                 // 2. Google 字體
                 if (!doc.head.querySelector('link[href*="fonts.googleapis.com"]')) {
                     const fl = doc.createElement('link');
@@ -781,7 +787,6 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
                 });
 
                 // 3b. 移除 Word 所有行內顏色格式（非 none 主題：螢光底色、紅字等一併清除）
-                const chosenTheme = document.getElementById('liveThemeSelect').value;
                 if (chosenTheme !== 'none') {
                     doc.querySelectorAll('*').forEach(el => {
                         el.removeAttribute('bgcolor');
@@ -861,6 +866,7 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
                         el.classList.add('theme-page-title');
                     }
                 });
+                }
 
                 // 4. 自訂標題
                 const customTitle = document.getElementById('titleInput').value.trim();
@@ -898,6 +904,7 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
                 currentFont = 'default';
                 document.getElementById('fontSelect').value = 'default';
                 headingIdx = 4; bodyIdx = 4;
+                fontSizeCtrlActive = false;
                 document.getElementById('headingSizeDisplay').textContent = HEADING_SIZES[headingIdx];
                 document.getElementById('bodySizeDisplay').textContent    = BODY_SIZES[bodyIdx];
 
