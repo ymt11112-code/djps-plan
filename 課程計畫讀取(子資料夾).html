@@ -5,10 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>課程計畫 HTML 檢視與連結設定工具</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@400;700&family=Cubic+11&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Noto Sans TC', sans-serif; }
         iframe { border: none; }
+        .cbtn { background:#fff; border:1px solid #d1d5db; border-radius:4px; padding:2px 8px; font-size:12px; cursor:pointer; line-height:1.4; }
+        .cbtn:hover { background:#f3f4f6; }
+        .cval { font-size:11px; font-family:monospace; min-width:28px; text-align:center; border:1px solid #e5e7eb; border-radius:3px; padding:1px 4px; background:#fff; display:inline-block; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
@@ -79,71 +82,88 @@
             </div><!-- /settingsPanel -->
 
             <!-- 動作面板 -->
-            <div id="actionPanel" class="mt-4 hidden flex items-center gap-3 flex-wrap bg-green-50 p-4 rounded-md border border-green-200">
-                <span class="text-green-800 font-medium flex items-center gap-2 shrink-0">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                    處理成功！
-                </span>
-                <a id="openTabBtn" href="#" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2 px-4 rounded shadow transition duration-150 shrink-0">
-                    ↗️ 另開視窗全螢幕瀏覽
-                </a>
-                <a id="downloadBtn" href="#" download="調整後的課程計畫首頁.html" class="bg-gray-800 hover:bg-gray-900 text-white text-sm font-bold py-2 px-4 rounded shadow transition duration-150 shrink-0">
-                    💾 下載處理後的網頁
-                </a>
+            <div id="actionPanel" class="mt-3 hidden bg-green-50 border border-green-200 rounded-md px-3 py-2">
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                    <!-- 狀態 + 按鈕 -->
+                    <span class="text-green-700 font-semibold text-xs flex items-center gap-1 shrink-0">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>成功
+                    </span>
+                    <a id="openTabBtn" href="#" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-1 px-2.5 rounded shrink-0">↗ 另開</a>
+                    <a id="downloadBtn" href="#" download="調整後的課程計畫首頁.html" class="bg-gray-700 hover:bg-gray-800 text-white text-xs font-bold py-1 px-2.5 rounded shrink-0">⬇ 下載</a>
 
-                <!-- 風格即時切換 -->
-                <div class="flex flex-col gap-1 border-l border-green-300 pl-3 shrink-0">
-                    <span class="text-gray-600 text-xs font-medium">美化風格：</span>
-                    <select id="liveThemeSelect" class="border border-gray-300 text-xs rounded-md px-2 py-1 bg-white">
-                        <optgroup label="── 單色系 ──">
-                            <option value="blue">🟦 專業藍（推薦）</option>
-                            <option value="green">🟩 典雅綠</option>
-                            <option value="orange">🟧 溫暖橘</option>
-                            <option value="red">🟥 活力紅</option>
-                            <option value="purple">🟪 柔和紫</option>
-                            <option value="teal">🩵 清新青</option>
-                        </optgroup>
-                        <optgroup label="── 專業版 ──">
-                            <option value="pro-classic">🗞️ 古典報紙</option>
-                            <option value="pro-forest">🌲 原野商務</option>
-                        </optgroup>
-                        <optgroup label="── 活潑版 ──">
-                            <option value="fun-ocean">🌊 海洋渲染</option>
-                            <option value="fun-milktea">🧋 奶茶無印</option>
-                            <option value="fun-candy">🍭 糖果彩虹</option>
-                        </optgroup>
-                        <optgroup label="── 其他 ──">
-                            <option value="none">⚪ 保留 Word 原始樣式</option>
-                        </optgroup>
-                    </select>
-                </div>
+                    <span class="text-gray-300 shrink-0">│</span>
 
-                <!-- 右側調整控制列 -->
-                <div class="ml-auto flex flex-col gap-1.5 border-l border-green-300 pl-4">
-                    <div class="flex items-center gap-2">
-                        <span class="text-gray-600 text-xs font-medium w-8 shrink-0">標題：</span>
-                        <button id="headingDecBtn" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-800 font-bold py-0.5 px-2.5 rounded shadow-sm text-sm">A－</button>
-                        <span id="headingSizeDisplay" class="text-xs font-mono w-12 text-center border border-gray-200 bg-white rounded py-0.5">16px</span>
-                        <button id="headingIncBtn" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-800 font-bold py-0.5 px-2.5 rounded shadow-sm text-sm">A＋</button>
+                    <!-- 風格 -->
+                    <div class="flex items-center gap-1 shrink-0">
+                        <span class="text-gray-500 text-xs">風格</span>
+                        <select id="liveThemeSelect" class="border border-gray-300 text-xs rounded px-1.5 py-0.5 bg-white">
+                            <optgroup label="── 單色系 ──">
+                                <option value="blue">🟦 專業藍（推薦）</option>
+                                <option value="green">🟩 典雅綠</option>
+                                <option value="orange">🟧 溫暖橘</option>
+                                <option value="red">🟥 活力紅</option>
+                                <option value="purple">🟪 柔和紫</option>
+                                <option value="teal">🩵 清新青</option>
+                            </optgroup>
+                            <optgroup label="── 專業版 ──">
+                                <option value="pro-classic">🗞️ 古典報紙</option>
+                                <option value="pro-forest">🌲 原野商務</option>
+                            </optgroup>
+                            <optgroup label="── 活潑版 ──">
+                                <option value="fun-ocean">🌊 海洋渲染</option>
+                                <option value="fun-milktea">🧋 奶茶無印</option>
+                                <option value="fun-candy">🍭 糖果彩虹</option>
+                            </optgroup>
+                            <optgroup label="── 其他 ──">
+                                <option value="none">⚪ 保留 Word 樣式</option>
+                            </optgroup>
+                        </select>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-gray-600 text-xs font-medium w-8 shrink-0">內文：</span>
-                        <button id="bodyDecBtn" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-800 font-bold py-0.5 px-2.5 rounded shadow-sm text-sm">A－</button>
-                        <span id="bodySizeDisplay" class="text-xs font-mono w-12 text-center border border-gray-200 bg-white rounded py-0.5">14px</span>
-                        <button id="bodyIncBtn" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-800 font-bold py-0.5 px-2.5 rounded shadow-sm text-sm">A＋</button>
+
+                    <!-- 字型 -->
+                    <div class="flex items-center gap-1 shrink-0">
+                        <span class="text-gray-500 text-xs">字型</span>
+                        <select id="fontSelect" class="border border-gray-300 text-xs rounded px-1.5 py-0.5 bg-white">
+                            <option value="sans">思源黑體（預設）</option>
+                            <option value="serif">思源宋體</option>
+                            <option value="cubic">粉圓體</option>
+                            <option value="lanyang">jf 蘭陽明體</option>
+                            <option value="taipei">台北黑體</option>
+                            <option value="kai">標楷體</option>
+                            <option value="ming">新細明體</option>
+                        </select>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-gray-600 text-xs font-medium w-8 shrink-0">行高：</span>
-                        <button id="rowHeightDecBtn" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-800 font-bold py-0.5 px-2.5 rounded shadow-sm text-sm">矮－</button>
-                        <span id="rowHeightDisplay" class="text-xs font-mono w-12 text-center border border-gray-200 bg-white rounded py-0.5">8px</span>
-                        <button id="rowHeightIncBtn" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-800 font-bold py-0.5 px-2.5 rounded shadow-sm text-sm">高＋</button>
+
+                    <span class="text-gray-300 shrink-0">│</span>
+
+                    <!-- 標題字級 -->
+                    <div class="flex items-center gap-1 shrink-0">
+                        <span class="text-gray-500 text-xs">標</span>
+                        <button id="headingDecBtn" class="cbtn">－</button>
+                        <span id="headingSizeDisplay" class="cval">16</span>
+                        <button id="headingIncBtn" class="cbtn">＋</button>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-gray-600 text-xs font-medium w-8 shrink-0">格線：</span>
-                        <button id="borderDecBtn" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-800 font-bold py-0.5 px-2.5 rounded shadow-sm text-sm">細－</button>
-                        <span id="borderWidthDisplay" class="text-xs font-mono w-12 text-center border border-gray-200 bg-white rounded py-0.5">1px</span>
-                        <button id="borderIncBtn" class="bg-white border border-gray-300 hover:bg-gray-100 text-gray-800 font-bold py-0.5 px-2.5 rounded shadow-sm text-sm">粗＋</button>
-                        <input type="color" id="borderColorPicker" value="#d1d5db" title="格線顏色" class="w-7 h-7 rounded cursor-pointer border border-gray-300 p-0">
+                    <!-- 內文字級 -->
+                    <div class="flex items-center gap-1 shrink-0">
+                        <span class="text-gray-500 text-xs">文</span>
+                        <button id="bodyDecBtn" class="cbtn">－</button>
+                        <span id="bodySizeDisplay" class="cval">14</span>
+                        <button id="bodyIncBtn" class="cbtn">＋</button>
+                    </div>
+                    <!-- 行高 -->
+                    <div class="flex items-center gap-1 shrink-0">
+                        <span class="text-gray-500 text-xs">行高</span>
+                        <button id="rowHeightDecBtn" class="cbtn">－</button>
+                        <span id="rowHeightDisplay" class="cval">8</span>
+                        <button id="rowHeightIncBtn" class="cbtn">＋</button>
+                    </div>
+                    <!-- 格線 -->
+                    <div class="flex items-center gap-1 shrink-0">
+                        <span class="text-gray-500 text-xs">框</span>
+                        <button id="borderDecBtn" class="cbtn">－</button>
+                        <span id="borderWidthDisplay" class="cval">1</span>
+                        <button id="borderIncBtn" class="cbtn">＋</button>
+                        <input type="color" id="borderColorPicker" value="#d1d5db" title="格線顏色" class="w-5 h-5 rounded cursor-pointer border-0 p-0 shrink-0">
                     </div>
                 </div>
             </div>
@@ -319,6 +339,29 @@
         };
 
         // ═══════════════════════════════════════════════════
+        // 字型設定
+        // ═══════════════════════════════════════════════════
+        const FONTS = {
+            sans:  { family: "'Noto Sans TC', sans-serif",  url: null },
+            serif: { family: "'Noto Serif TC', serif",      url: 'https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap' },
+            cubic: { family: "'Cubic 11', sans-serif",      url: 'https://fonts.googleapis.com/css2?family=Cubic+11&display=swap' },
+            lanyang: { family: "'JF Open 蘭陽明體','jf-openhuninn',serif",
+                       url: 'https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap',
+                       face: `@font-face{font-family:'JF Open 蘭陽明體';src:url('https://cdn.jsdelivr.net/gh/justfont/open-huninn-font@main/font/jf-openhuninn.woff2') format('woff2');font-weight:normal;}` },
+            taipei: { family: "'TaipeiSansTCBeta',sans-serif",
+                      face: `@font-face{font-family:'TaipeiSansTCBeta';src:url('https://cdn.jsdelivr.net/gh/max32002/tpe-sans@main/WebFont/Regular/TaipeiSansTCBeta-Regular.woff2') format('woff2');font-weight:normal;}` },
+            kai:   { family: "'DFKai-SB','標楷體','Kaiti TC',serif", url: null },
+            ming:  { family: "'PMingLiU','新細明體','MingLiU',serif", url: null },
+        };
+        let currentFont = 'sans';
+
+        function getFontFamilyCSS() {
+            const f = FONTS[currentFont];
+            if (!f || currentFont === 'sans') return '';
+            return `body,table,td,th,p,span,div,a,li { font-family:${f.family} !important; }`;
+        }
+
+        // ═══════════════════════════════════════════════════
         // 狀態變數
         // ═══════════════════════════════════════════════════
         let previousObjectUrl = null;
@@ -373,10 +416,19 @@
             if (!baseHtmlForDownload) return;
             if (previousObjectUrl) URL.revokeObjectURL(previousObjectUrl);
             const themeCSS = (currentLiveTheme !== 'none') ? (themes[currentLiveTheme] || '') : '';
+            const fontCSS  = getFontFamilyCSS();
+            const fontF    = FONTS[currentFont];
             let html = baseHtmlForDownload
                 .replace('<style id="__theme-style__"></style>',
                     `<style id="__theme-style__">${themeCSS}</style>`);
+            // Inject web font link or @font-face if needed
+            if (fontF && fontF.url) {
+                html = html.replace('</head>', `<link rel="stylesheet" href="${fontF.url}">\n</head>`);
+            }
+            const faceCss = (fontF && fontF.face) ? fontF.face : '';
             html = html.replace('</head>',
+                `<style id="__font-face-ctrl__">${faceCss}</style>\n` +
+                `<style id="__font-family-ctrl__">${fontCSS}</style>\n` +
                 `<style id="__font-ctrl__">${getFontCtrlCSS()}</style>\n` +
                 `<style id="__row-height-ctrl__">${getRowHeightCSS()}</style>\n` +
                 `<style id="__border-ctrl__">${getBorderCtrlCSS()}</style>\n</head>`);
@@ -403,23 +455,40 @@
         // 套用函式
         // ═══════════════════════════════════════════════════
         function applyFontSize() {
-            document.getElementById('headingSizeDisplay').textContent = HEADING_SIZES[headingIdx] + 'px';
-            document.getElementById('bodySizeDisplay').textContent    = BODY_SIZES[bodyIdx] + 'px';
+            document.getElementById('headingSizeDisplay').textContent = HEADING_SIZES[headingIdx];
+            document.getElementById('bodySizeDisplay').textContent    = BODY_SIZES[bodyIdx];
             updateIframeStyle('__font-ctrl__', getFontCtrlCSS());
             updateDownloadBlob();
         }
 
         function applyRowHeight() {
             rowHeightCtrlActive = true;
-            document.getElementById('rowHeightDisplay').textContent = ROW_PADDINGS[rowPaddingIdx] + 'px';
+            document.getElementById('rowHeightDisplay').textContent = ROW_PADDINGS[rowPaddingIdx];
             updateIframeStyle('__row-height-ctrl__', getRowHeightCSS());
             updateDownloadBlob();
         }
 
         function applyBorderStyle() {
             borderCtrlActive = true;
-            document.getElementById('borderWidthDisplay').textContent = BORDER_WIDTHS[borderWidthIdx] + 'px';
+            document.getElementById('borderWidthDisplay').textContent = BORDER_WIDTHS[borderWidthIdx];
             updateIframeStyle('__border-ctrl__', getBorderCtrlCSS());
+            updateDownloadBlob();
+        }
+
+        function applyFont() {
+            const f = FONTS[currentFont];
+            const iframe = document.getElementById('previewFrame');
+            if (f && iframe.contentDocument && iframe.contentDocument.head) {
+                if (f.url && !iframe.contentDocument.head.querySelector(`link[href="${f.url}"]`)) {
+                    const lk = iframe.contentDocument.createElement('link');
+                    lk.rel = 'stylesheet'; lk.href = f.url;
+                    iframe.contentDocument.head.appendChild(lk);
+                }
+                if (f.face) {
+                    updateIframeStyle('__font-face-ctrl__', f.face);
+                }
+            }
+            updateIframeStyle('__font-family-ctrl__', getFontFamilyCSS());
             updateDownloadBlob();
         }
 
@@ -487,7 +556,13 @@
                 });
                 doc.querySelectorAll('td, th').forEach(el => {
                     el.removeAttribute('width');
-                    if (el.style) { el.style.width = ''; el.style.minWidth = ''; el.style.maxWidth = ''; }
+                    if (el.style) {
+                        el.style.width = ''; el.style.minWidth = ''; el.style.maxWidth = '';
+                        // 清除行內 padding，確保行高控制能作用於全表格
+                        el.style.padding = '';
+                        el.style.paddingTop = ''; el.style.paddingBottom = '';
+                        el.style.paddingLeft = ''; el.style.paddingRight = '';
+                    }
                 });
                 doc.querySelectorAll('tr').forEach(el => {
                     el.removeAttribute('height');
@@ -513,6 +588,32 @@
                         cg.appendChild(co);
                     }
                     table.insertBefore(cg, table.firstChild);
+                });
+
+                // 3a-3. 修正年級表頭 colspan 不一致（六年級比其他年級窄的根本原因）
+                doc.querySelectorAll('table').forEach(table => {
+                    table.querySelectorAll('tr').forEach(row => {
+                        const gradeRe = /^[一二三四五六七八九十]年級$/;
+                        const cells = Array.from(row.cells);
+                        const gradeCells = cells.filter(c => gradeRe.test(c.textContent.trim()));
+                        if (gradeCells.length < 2) return;
+                        const maxSpan = Math.max(...gradeCells.map(c => c.colSpan || 1));
+                        // 補足 colspan 不足的年級格，吸收緊鄰的多餘欄位（如獨立的「6B」欄）
+                        for (const gc of gradeCells) {
+                            let need = maxSpan - (gc.colSpan || 1);
+                            if (need <= 0) continue;
+                            let next = gc.nextElementSibling;
+                            while (next && need > 0) {
+                                if (gradeRe.test(next.textContent.trim())) break;
+                                const ns = next.colSpan || 1;
+                                gc.colSpan = (gc.colSpan || 1) + Math.min(need, ns);
+                                need -= ns;
+                                const rem = next;
+                                next = next.nextElementSibling;
+                                rem.remove();
+                            }
+                        }
+                    });
                 });
 
                 // 3b. 移除 Word 所有行內顏色格式（非 none 主題：螢光底色、紅字等一併清除）
@@ -621,12 +722,22 @@
                 // 4e. 重設控制列並加入佔位 style
                 rowHeightCtrlActive = false;
                 rowPaddingIdx = 3;
-                document.getElementById('rowHeightDisplay').textContent = ROW_PADDINGS[rowPaddingIdx] + 'px';
+                document.getElementById('rowHeightDisplay').textContent = ROW_PADDINGS[rowPaddingIdx];
                 borderCtrlActive = false;
                 borderWidthIdx   = 1;
                 borderColor      = '#d1d5db';
                 document.getElementById('borderColorPicker').value = borderColor;
-                document.getElementById('borderWidthDisplay').textContent = BORDER_WIDTHS[borderWidthIdx] + 'px';
+                document.getElementById('borderWidthDisplay').textContent = BORDER_WIDTHS[borderWidthIdx];
+                // 重設字型
+                currentFont = document.getElementById('fontSelect').value;
+                headingIdx = 4; bodyIdx = 4;
+                document.getElementById('headingSizeDisplay').textContent = HEADING_SIZES[headingIdx];
+                document.getElementById('bodySizeDisplay').textContent    = BODY_SIZES[bodyIdx];
+
+                const fontFamilyStyle = doc.createElement('style');
+                fontFamilyStyle.id    = '__font-family-ctrl__';
+                fontFamilyStyle.innerHTML = getFontFamilyCSS();
+                doc.head.appendChild(fontFamilyStyle);
 
                 const fontSizeStyle = doc.createElement('style');
                 fontSizeStyle.id    = '__font-ctrl__';
@@ -677,6 +788,12 @@
             currentLiveTheme = e.target.value;
             updateIframeStyle('__theme-style__', currentLiveTheme !== 'none' ? (themes[currentLiveTheme] || '') : '');
             updateDownloadBlob();
+        });
+
+        // 字型選擇
+        document.getElementById('fontSelect').addEventListener('change', (e) => {
+            currentFont = e.target.value;
+            applyFont();
         });
 
         document.getElementById('headingDecBtn').addEventListener('click', () => { if (headingIdx > 0) { headingIdx--; applyFontSize(); } });
