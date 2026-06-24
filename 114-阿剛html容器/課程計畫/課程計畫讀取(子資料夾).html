@@ -612,6 +612,24 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
                 const gradeRe = /^[一二三四五六七八九十]年級$/;
                 const classLabelRe = /^[1-6]\s*[AB]$/i;
                 const fLabelRe = /^f\s*[-－]\s*[1-4]/i;
+                const getClassSlotIndex = (raw) => {
+                    const label = (raw || '').replace(/\s+/g, '').toUpperCase();
+                    if (label === '' || label === '-' || label === '－') return null;
+
+                    const classMatch = label.match(/^([1-6])([AB])/);
+                    if (classMatch) {
+                        return (Number(classMatch[1]) - 1) * 2 + (classMatch[2] === 'B' ? 1 : 0);
+                    }
+
+                    const gMatch = label.match(/^G([1-6])/);
+                    if (gMatch) {
+                        const gradeNo = Number(gMatch[1]);
+                        const isLower = label.includes('下');
+                        return (gradeNo - 1) * 2 + (isLower ? 1 : 0);
+                    }
+
+                    return undefined;
+                };
                 const buildCellMap = (table, maxCols) => {
                     const map = [];
                     const rsLeft = new Array(maxCols).fill(0);
@@ -750,19 +768,19 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
                         Array.from(table.rows).forEach(row => {
                             const entries = tableMap.filter(e => e.row === row);
                             const gradeAreaEntries = entries.filter(e => e.startCol >= firstCol);
-                            const classEntries = gradeAreaEntries.filter(e => classLabelRe.test(e.cell.textContent.replace(/\s+/g, '')));
+                            const classEntries = gradeAreaEntries.filter(e => typeof getClassSlotIndex(e.cell.textContent) === 'number');
                             if (classEntries.length < 2) return;
                             const simpleGradeArea = gradeAreaEntries.every(e => {
-                                const label = e.cell.textContent.replace(/\s+/g, '').toUpperCase();
-                                return label === '' || label === '-' || label === '－' || classLabelRe.test(label);
+                                const slot = getClassSlotIndex(e.cell.textContent);
+                                return slot === null || typeof slot === 'number';
                             });
                             if (!simpleGradeArea) return;
 
-                            const existingByLabel = new Map();
+                            const existingBySlot = new Map();
                             gradeAreaEntries.forEach(e => {
-                                const label = e.cell.textContent.replace(/\s+/g, '').toUpperCase();
-                                if (classLabelRe.test(label) && !existingByLabel.has(label)) {
-                                    existingByLabel.set(label, e.cell);
+                                const slot = getClassSlotIndex(e.cell.textContent);
+                                if (typeof slot === 'number' && !existingBySlot.has(slot)) {
+                                    existingBySlot.set(slot, e.cell);
                                 }
                             });
 
@@ -771,8 +789,8 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
                             );
                             const firstRemovable = removableEntries[0] ? removableEntries[0].cell : null;
                             const removeSet = new Set(removableEntries.map(e => e.cell));
-                            const newCells = classSlots.map(slot => {
-                                const existing = existingByLabel.get(slot.label);
+                            const newCells = classSlots.map((slot, slotIndex) => {
+                                const existing = existingBySlot.get(slotIndex);
                                 const cell = existing ? existing.cloneNode(true) : doc.createElement('td');
                                 if (!existing) cell.textContent = '-';
                                 cell.colSpan = slot.span;
