@@ -124,10 +124,9 @@
                     <div class="flex items-center gap-1 shrink-0">
                         <span class="text-gray-500 text-xs">字型</span>
                         <select id="fontSelect" class="border border-gray-300 text-xs rounded px-1.5 py-0.5 bg-white">
-                            <option value="sans">思源黑體（預設）</option>
+                            <option value="default">預設字型</option>
                             <option value="serif">思源宋體</option>
-                            <option value="cubic">粉圓體</option>
-                            <option value="lanyang">jf 蘭陽明體</option>
+                            <option value="wenkai">霞鶩文楷</option>
                             <option value="taipei">台北黑體</option>
                             <option value="kai">標楷體</option>
                             <option value="ming">新細明體</option>
@@ -342,22 +341,21 @@
         // 字型設定
         // ═══════════════════════════════════════════════════
         const FONTS = {
-            sans:  { family: "'Noto Sans TC', sans-serif",  url: null },
-            serif: { family: "'Noto Serif TC', serif",      url: 'https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap' },
-            cubic: { family: "'Cubic 11', sans-serif",      url: 'https://fonts.googleapis.com/css2?family=Cubic+11&display=swap' },
-            lanyang: { family: "'JF Open 蘭陽明體','jf-openhuninn',serif",
-                       url: 'https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap',
-                       face: `@font-face{font-family:'JF Open 蘭陽明體';src:url('https://cdn.jsdelivr.net/gh/justfont/open-huninn-font@main/font/jf-openhuninn.woff2') format('woff2');font-weight:normal;}` },
-            taipei: { family: "'TaipeiSansTCBeta',sans-serif",
+            default: { family: null, url: null },
+            serif:  { family: "'Noto Serif TC', serif",
+                      url: 'https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap' },
+            wenkai: { family: "'LXGW WenKai Screen', serif",
+                      url: 'https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css' },
+            taipei: { family: "'TaipeiSansTCBeta', sans-serif",
                       face: `@font-face{font-family:'TaipeiSansTCBeta';src:url('https://cdn.jsdelivr.net/gh/max32002/tpe-sans@main/WebFont/Regular/TaipeiSansTCBeta-Regular.woff2') format('woff2');font-weight:normal;}` },
-            kai:   { family: "'DFKai-SB','標楷體','Kaiti TC',serif", url: null },
-            ming:  { family: "'PMingLiU','新細明體','MingLiU',serif", url: null },
+            kai:    { family: "'DFKai-SB','標楷體','Kaiti TC', serif", url: null },
+            ming:   { family: "'PMingLiU','新細明體','MingLiU', serif", url: null },
         };
-        let currentFont = 'sans';
+        let currentFont = 'default';
 
         function getFontFamilyCSS() {
             const f = FONTS[currentFont];
-            if (!f || currentFont === 'sans') return '';
+            if (!f || !f.family) return '';
             return `body,table,td,th,p,span,div,a,li { font-family:${f.family} !important; }`;
         }
 
@@ -402,7 +400,10 @@
         function getRowHeightCSS() {
             if (!rowHeightCtrlActive) return '';
             const p = ROW_PADDINGS[rowPaddingIdx];
-            return `td, th { padding-top:${p}px !important; padding-bottom:${p}px !important; }`;
+            const lh = p <= 2 ? 1.1 : p <= 6 ? 1.3 : p <= 10 ? 1.5 : 1.6;
+            const ph = Math.max(4, p * 2);
+            return `td,th{padding:${p}px ${ph}px !important;line-height:${lh} !important;}
+td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important;}`;
         }
 
         function getBorderCtrlCSS() {
@@ -569,51 +570,80 @@
                     if (el.style) el.style.height = '';
                 });
                 const baseRespStyle = doc.createElement('style');
-                baseRespStyle.innerHTML = `body{overflow-x:hidden;} table{width:100% !important;table-layout:fixed !important;word-wrap:break-word;} td,th{word-break:break-word;overflow-wrap:break-word;}`;
+                baseRespStyle.innerHTML = `body{overflow-x:hidden;} table{width:100% !important;table-layout:fixed !important;word-wrap:break-word;} td,th{word-break:break-word;overflow-wrap:break-word;} td p,td div,td li,th p,th div,th li{margin-top:0 !important;margin-bottom:0 !important;}`;
                 doc.head.appendChild(baseRespStyle);
 
-                // 3a-2. 各表格注入等寬 colgroup（確保一～六年級欄位寬度一致）
+                // 3a-2+3. 年級欄等寬 colgroup（含年級列 colspan 均等化）
+                const gradeRe = /^[一二三四五六七八九十]年級$/;
                 doc.querySelectorAll('table').forEach(table => {
+                    // ── 計算 maxCols ──
                     let maxCols = 0;
                     table.querySelectorAll('tr').forEach(row => {
                         const n = Array.from(row.cells).reduce((s, c) => s + (c.colSpan || 1), 0);
                         if (n > maxCols) maxCols = n;
                     });
                     if (maxCols < 2) return;
-                    table.querySelectorAll('colgroup, col').forEach(e => e.remove());
-                    const cg = doc.createElement('colgroup');
-                    for (let i = 0; i < maxCols; i++) {
-                        const co = doc.createElement('col');
-                        co.style.width = (100 / maxCols).toFixed(3) + '%';
-                        cg.appendChild(co);
-                    }
-                    table.insertBefore(cg, table.firstChild);
-                });
 
-                // 3a-3. 修正年級表頭 colspan 不一致（六年級比其他年級窄的根本原因）
-                doc.querySelectorAll('table').forEach(table => {
-                    table.querySelectorAll('tr').forEach(row => {
-                        const gradeRe = /^[一二三四五六七八九十]年級$/;
-                        const cells = Array.from(row.cells);
-                        const gradeCells = cells.filter(c => gradeRe.test(c.textContent.trim()));
-                        if (gradeCells.length < 2) return;
-                        const maxSpan = Math.max(...gradeCells.map(c => c.colSpan || 1));
-                        // 補足 colspan 不足的年級格，吸收緊鄰的多餘欄位（如獨立的「6B」欄）
-                        for (const gc of gradeCells) {
-                            let need = maxSpan - (gc.colSpan || 1);
-                            if (need <= 0) continue;
-                            let next = gc.nextElementSibling;
-                            while (next && need > 0) {
-                                if (gradeRe.test(next.textContent.trim())) break;
-                                const ns = next.colSpan || 1;
-                                gc.colSpan = (gc.colSpan || 1) + Math.min(need, ns);
-                                need -= ns;
-                                const rem = next;
-                                next = next.nextElementSibling;
-                                rem.remove();
+                    // ── 以 rowspan 追蹤找出年級格的實際欄位 ──
+                    const rsLeft = new Array(maxCols).fill(0);
+                    let gradeCols = null;
+                    for (const row of Array.from(table.rows)) {
+                        for (let c = 0; c < maxCols; c++) { if (rsLeft[c] > 0) rsLeft[c]--; }
+                        let col = 0;
+                        const found = [];
+                        for (const cell of Array.from(row.cells)) {
+                            while (col < maxCols && rsLeft[col] > 0) col++;
+                            if (col >= maxCols) break;
+                            const cs = cell.colSpan || 1, rs = cell.rowSpan || 1;
+                            if (gradeRe.test(cell.textContent.trim())) found.push({ cell, startCol: col, cs });
+                            for (let c = col; c < Math.min(col + cs, maxCols); c++) rsLeft[c] = Math.max(rsLeft[c], rs);
+                            col += cs;
+                        }
+                        if (found.length >= 2) { gradeCols = found; break; }
+                    }
+
+                    // ── 吸收年級格後的空白欄（僅限完全空白的 td）──
+                    if (gradeCols) {
+                        for (const g of gradeCols) {
+                            let nx = g.cell.nextElementSibling;
+                            while (nx && nx.textContent.trim() === '' && !gradeRe.test(nx.textContent.trim())) {
+                                g.cs += (nx.colSpan || 1);
+                                g.cell.colSpan = g.cs;
+                                const rem = nx; nx = nx.nextElementSibling; rem.remove();
                             }
                         }
+                    }
+
+                    // ── 重新計算總跨欄並均等化年級格 colspan ──
+                    let colWidths = new Array(maxCols).fill(100 / maxCols);
+                    if (gradeCols && gradeCols.length >= 2) {
+                        const firstCol = gradeCols[0].startCol;
+                        const last = gradeCols[gradeCols.length - 1];
+                        const lastCol = last.startCol + last.cs - 1;
+                        const totalBase = lastCol - firstCol + 1;
+                        const n = gradeCols.length;
+                        // 設各年級格 colspan 均等（整除）
+                        const base = Math.floor(totalBase / n), rem = totalBase % n;
+                        gradeCols.forEach((g, i) => { g.cell.colSpan = base + (i < rem ? 1 : 0); });
+                        // 調整 colgroup：年級範圍內每基欄寬度以視覺等寬為準
+                        const totalGradeW = totalBase * (100 / maxCols);
+                        let c2 = firstCol;
+                        for (let i = 0; i < n; i++) {
+                            const span = base + (i < rem ? 1 : 0);
+                            const perBase = totalGradeW / totalBase; // already equal per base col
+                            for (let c = 0; c < span; c++) { colWidths[c2++] = perBase; }
+                        }
+                    }
+
+                    // ── 注入 colgroup ──
+                    table.querySelectorAll('colgroup, col').forEach(e => e.remove());
+                    const cg = doc.createElement('colgroup');
+                    colWidths.forEach(w => {
+                        const co = doc.createElement('col');
+                        co.style.width = w.toFixed(3) + '%';
+                        cg.appendChild(co);
                     });
+                    table.insertBefore(cg, table.firstChild);
                 });
 
                 // 3b. 移除 Word 所有行內顏色格式（非 none 主題：螢光底色、紅字等一併清除）
@@ -729,7 +759,8 @@
                 document.getElementById('borderColorPicker').value = borderColor;
                 document.getElementById('borderWidthDisplay').textContent = BORDER_WIDTHS[borderWidthIdx];
                 // 重設字型
-                currentFont = document.getElementById('fontSelect').value;
+                currentFont = 'default';
+                document.getElementById('fontSelect').value = 'default';
                 headingIdx = 4; bodyIdx = 4;
                 document.getElementById('headingSizeDisplay').textContent = HEADING_SIZES[headingIdx];
                 document.getElementById('bodySizeDisplay').textContent    = BODY_SIZES[bodyIdx];
