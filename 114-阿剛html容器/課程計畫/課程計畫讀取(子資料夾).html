@@ -157,6 +157,13 @@
                         <span id="rowHeightDisplay" class="cval">8</span>
                         <button id="rowHeightIncBtn" class="cbtn">＋</button>
                     </div>
+                    <!-- 目錄索引欄寬 -->
+                    <div class="flex items-center gap-1 shrink-0">
+                        <span class="text-gray-500 text-xs">目錄</span>
+                        <button id="indexColDecBtn" class="cbtn">－</button>
+                        <span id="indexColWidthDisplay" class="cval">56</span>
+                        <button id="indexColIncBtn" class="cbtn">＋</button>
+                    </div>
                     <!-- 格線 -->
                     <div class="flex items-center gap-1 shrink-0">
                         <span class="text-gray-500 text-xs">框</span>
@@ -380,6 +387,10 @@
         let rowPaddingIdx = 3;
         let rowHeightCtrlActive = false;
 
+        // 目錄 A/B/C、D/E/F、H/I/J/K/L 索引欄寬
+        const INDEX_COL_WIDTHS = [32, 40, 48, 56, 64, 72, 88, 104, 120];
+        let indexColWidthIdx = 3;
+
         // 格線
         const BORDER_WIDTHS = [0.5, 1, 1.5, 2, 3];
         let borderWidthIdx = 1;
@@ -409,6 +420,20 @@
 td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important;}`;
         }
 
+        function getIndexColWidthCSS() {
+            const w = INDEX_COL_WIDTHS[indexColWidthIdx];
+            return `
+                col.theme-index-letter-col { width:${w}px !important; }
+                td.theme-index-letter-cell, th.theme-index-letter-cell {
+                    width:${w}px !important;
+                    min-width:${w}px !important;
+                    max-width:${w}px !important;
+                    text-align:center !important;
+                    white-space:nowrap !important;
+                }
+            `;
+        }
+
         function getBorderCtrlCSS() {
             if (!borderCtrlActive) return '';
             const w = BORDER_WIDTHS[borderWidthIdx];
@@ -435,6 +460,7 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
                 `<style id="__font-family-ctrl__">${fontCSS}</style>\n` +
                 `<style id="__font-ctrl__">${getFontCtrlCSS()}</style>\n` +
                 `<style id="__row-height-ctrl__">${getRowHeightCSS()}</style>\n` +
+                `<style id="__index-col-width-ctrl__">${getIndexColWidthCSS()}</style>\n` +
                 `<style id="__border-ctrl__">${getBorderCtrlCSS()}</style>\n</head>`);
             const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
             const objectUrl = URL.createObjectURL(blob);
@@ -469,6 +495,12 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
             rowHeightCtrlActive = true;
             document.getElementById('rowHeightDisplay').textContent = ROW_PADDINGS[rowPaddingIdx];
             updateIframeStyle('__row-height-ctrl__', getRowHeightCSS());
+            updateDownloadBlob();
+        }
+
+        function applyIndexColWidth() {
+            document.getElementById('indexColWidthDisplay').textContent = INDEX_COL_WIDTHS[indexColWidthIdx];
+            updateIframeStyle('__index-col-width-ctrl__', getIndexColWidthCSS());
             updateDownloadBlob();
         }
 
@@ -587,6 +619,33 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
                     });
                     if (maxCols < 2) return;
 
+                    // ── 標記目錄索引欄：A/B/C、D/E/F、H/I/J/K/L 等單字母欄 ──
+                    const indexLetterRe = /^[A-LＡ-Ｌ]$/;
+                    const indexLetterCols = new Set();
+                    const indexLetterCells = [];
+                    const indexRsLeft = new Array(maxCols).fill(0);
+                    for (const row of Array.from(table.rows)) {
+                        for (let c = 0; c < maxCols; c++) { if (indexRsLeft[c] > 0) indexRsLeft[c]--; }
+                        let col = 0;
+                        for (const cell of Array.from(row.cells)) {
+                            while (col < maxCols && indexRsLeft[col] > 0) col++;
+                            if (col >= maxCols) break;
+                            const cs = cell.colSpan || 1, rs = cell.rowSpan || 1;
+                            const text = cell.textContent.trim().toUpperCase();
+                            if (indexLetterRe.test(text)) {
+                                indexLetterCells.push(cell);
+                                for (let c = col; c < Math.min(col + cs, maxCols); c++) indexLetterCols.add(c);
+                            }
+                            for (let c = col; c < Math.min(col + cs, maxCols); c++) indexRsLeft[c] = Math.max(indexRsLeft[c], rs);
+                            col += cs;
+                        }
+                    }
+                    if (indexLetterCols.size >= 3) {
+                        indexLetterCells.forEach(cell => cell.classList.add('theme-index-letter-cell'));
+                    } else {
+                        indexLetterCols.clear();
+                    }
+
                     // ── 以 rowspan 追蹤找出年級格的實際欄位 ──
                     const rsLeft = new Array(maxCols).fill(0);
                     let gradeCols = null;
@@ -641,9 +700,14 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
                     // ── 注入 colgroup ──
                     table.querySelectorAll('colgroup, col').forEach(e => e.remove());
                     const cg = doc.createElement('colgroup');
-                    colWidths.forEach(w => {
+                    colWidths.forEach((w, i) => {
                         const co = doc.createElement('col');
-                        co.style.width = w.toFixed(3) + '%';
+                        if (indexLetterCols.has(i)) {
+                            co.className = 'theme-index-letter-col';
+                            co.style.width = INDEX_COL_WIDTHS[indexColWidthIdx] + 'px';
+                        } else {
+                            co.style.width = w.toFixed(3) + '%';
+                        }
                         cg.appendChild(co);
                     });
                     table.insertBefore(cg, table.firstChild);
@@ -756,6 +820,8 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
                 rowHeightCtrlActive = false;
                 rowPaddingIdx = 3;
                 document.getElementById('rowHeightDisplay').textContent = ROW_PADDINGS[rowPaddingIdx];
+                indexColWidthIdx = 3;
+                document.getElementById('indexColWidthDisplay').textContent = INDEX_COL_WIDTHS[indexColWidthIdx];
                 borderCtrlActive = false;
                 borderWidthIdx   = 1;
                 borderColor      = '#d1d5db';
@@ -782,6 +848,11 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
                 rowHStyle.id    = '__row-height-ctrl__';
                 rowHStyle.innerHTML = '';
                 doc.head.appendChild(rowHStyle);
+
+                const indexColStyle = doc.createElement('style');
+                indexColStyle.id    = '__index-col-width-ctrl__';
+                indexColStyle.innerHTML = getIndexColWidthCSS();
+                doc.head.appendChild(indexColStyle);
 
                 const borderStyle = doc.createElement('style');
                 borderStyle.id    = '__border-ctrl__';
@@ -837,6 +908,9 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
 
         document.getElementById('rowHeightDecBtn').addEventListener('click', () => { if (rowPaddingIdx > 0) { rowPaddingIdx--; applyRowHeight(); } });
         document.getElementById('rowHeightIncBtn').addEventListener('click', () => { if (rowPaddingIdx < ROW_PADDINGS.length-1) { rowPaddingIdx++; applyRowHeight(); } });
+
+        document.getElementById('indexColDecBtn').addEventListener('click', () => { if (indexColWidthIdx > 0) { indexColWidthIdx--; applyIndexColWidth(); } });
+        document.getElementById('indexColIncBtn').addEventListener('click', () => { if (indexColWidthIdx < INDEX_COL_WIDTHS.length-1) { indexColWidthIdx++; applyIndexColWidth(); } });
 
         document.getElementById('borderDecBtn').addEventListener('click',   () => { if (borderWidthIdx > 0) { borderWidthIdx--; applyBorderStyle(); } });
         document.getElementById('borderIncBtn').addEventListener('click',   () => { if (borderWidthIdx < BORDER_WIDTHS.length-1) { borderWidthIdx++; applyBorderStyle(); } });
