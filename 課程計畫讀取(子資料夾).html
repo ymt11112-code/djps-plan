@@ -127,6 +127,7 @@
                             <option value="default">預設字型</option>
                             <option value="serif">思源宋體</option>
                             <option value="wenkai">霞鶩文楷</option>
+                            <option value="naikai">內海字體</option>
                             <option value="taipei">台北黑體</option>
                             <option value="kai">標楷體</option>
                             <option value="ming">新細明體</option>
@@ -346,6 +347,8 @@
                       url: 'https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap' },
             wenkai: { family: "'LXGW WenKai Screen', serif",
                       url: 'https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css' },
+            naikai: { family: "'NaikaiFont', serif",
+                      face: `@font-face{font-family:'NaikaiFont';src:url('https://cdn.jsdelivr.net/gh/max32002/naikaifont@master/webfont/NaikaiFont-Regular.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap;}@font-face{font-family:'NaikaiFont';src:url('https://cdn.jsdelivr.net/gh/max32002/naikaifont@master/webfont/NaikaiFont-Bold.woff2') format('woff2');font-weight:700;font-style:normal;font-display:swap;}` },
             taipei: { family: "'TaipeiSansTCBeta', sans-serif",
                       face: `@font-face{font-family:'TaipeiSansTCBeta';src:url('https://cdn.jsdelivr.net/gh/max32002/tpe-sans@main/WebFont/Regular/TaipeiSansTCBeta-Regular.woff2') format('woff2');font-weight:normal;}` },
             kai:    { family: "'DFKai-SB','標楷體','Kaiti TC', serif", url: null },
@@ -575,7 +578,54 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
 
                 // 3a-2+3. 年級欄等寬 colgroup（含年級列 colspan 均等化）
                 const gradeRe = /^[一二三四五六七八九十]年級$/;
+                const normalizeLinkIndexTable = (table) => {
+                    const rows = Array.from(table.rows);
+                    if (!rows.length) return;
+
+                    const hasGradeRow = rows.some(row =>
+                        Array.from(row.cells).filter(cell => gradeRe.test(cell.textContent.trim())).length >= 2
+                    );
+                    const linkCount = table.querySelectorAll('a').length;
+                    if (!hasGradeRow && linkCount < 3) return;
+
+                    const maxCells = Math.max(...rows.map(row => row.cells.length));
+                    if (maxCells < 2) return;
+
+                    rows.forEach(row => {
+                        const cells = Array.from(row.cells);
+                        if (!cells.length) return;
+
+                        const gradeCells = cells.filter(cell => gradeRe.test(cell.textContent.trim()));
+                        if (gradeCells.length >= 2) {
+                            const base = Math.floor(maxCells / gradeCells.length);
+                            const rem = maxCells % gradeCells.length;
+                            gradeCells.forEach((cell, i) => {
+                                cell.colSpan = Math.max(1, base + (i < rem ? 1 : 0));
+                                cell.style.width = `${(100 / gradeCells.length).toFixed(3)}%`;
+                            });
+                            cells.forEach(cell => {
+                                if (!gradeCells.includes(cell) && cell.textContent.trim() === '') cell.remove();
+                            });
+                            return;
+                        }
+
+                        if (cells.length === 1) {
+                            cells[0].colSpan = maxCells;
+                            cells[0].style.width = '100%';
+                            return;
+                        }
+
+                        const base = Math.floor(maxCells / cells.length);
+                        const rem = maxCells % cells.length;
+                        cells.forEach((cell, i) => {
+                            cell.colSpan = Math.max(1, base + (i < rem ? 1 : 0));
+                            cell.style.width = `${(100 / cells.length).toFixed(3)}%`;
+                        });
+                    });
+                };
                 doc.querySelectorAll('table').forEach(table => {
+                    normalizeLinkIndexTable(table);
+
                     // ── 計算 maxCols ──
                     let maxCols = 0;
                     table.querySelectorAll('tr').forEach(row => {
