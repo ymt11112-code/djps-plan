@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>課程計畫 HTML 檢視與連結設定工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@400;700&family=Cubic+11&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans TC', sans-serif; }
+        iframe { border: none; }
+        .cbtn { background:#fff; border:1px solid #d1d5db; border-radius:4px; padding:2px 8px; font-size:12px; cursor:pointer; line-height:1.4; }
+        .cbtn:hover { background:#f3f4f6; }
+        .cval { font-size:11px; font-family:monospace; min-width:28px; text-align:center; border:1px solid #e5e7eb; border-radius:3px; padding:1px 4px; background:#fff; display:inline-block; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+
+    <!-- 控制面板 -->
+    <div class="bg-white shadow-md z-10">
+        <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between mb-3">
+                <h1 class="text-2xl font-bold text-gray-800">📄 課程計畫 HTML 檢視與美化工具</h1>
+                <button id="toggleSettingsBtn" class="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-md transition-colors">
+                    <span id="toggleArrow" class="inline-block transition-transform duration-200 text-xs">▼</span>
+                    <span id="toggleLabel">收合設定</span>
+                </button>
+            </div>
+            <div id="settingsPanel">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 bg-blue-50 p-5 rounded-lg border border-blue-100">
+
+                <!-- 步驟 1：連結設定 -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">
+                        1. 設定基礎網址 (Google Apps Script)
+                    </label>
+                    <input type="text" id="baseUrl"
+                           placeholder="例如: https://script.google.com/.../exec"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 shadow-sm text-sm">
+                </div>
+
+                <!-- 步驟 2：檔案上傳 -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">
+                        2. 上傳從 Word 存出的網頁檔
+                    </label>
+                    <div class="flex items-center gap-2">
+                        <input type="file" id="fileInput" accept=".htm,.html"
+                               class="block w-full text-sm text-gray-500
+                                      file:mr-2 file:py-2 file:px-4
+                                      file:rounded-md file:border-0
+                                      file:text-sm file:font-semibold
+                                      file:bg-blue-600 file:text-white
+                                      hover:file:bg-blue-700 cursor-pointer">
+                        <select id="encoding" class="border border-gray-300 text-sm rounded-md px-2 py-2">
+                            <option value="big5">Big5</option>
+                            <option value="utf-8">UTF-8</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 步驟 3：執行 -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">
+                        3. 完成後點擊套用（風格可在下方隨時切換）
+                    </label>
+                    <button id="renderBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-md shadow transition duration-150 w-full">
+                        套用並顯示
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- 步驟 4：網頁標題 -->
+            <div class="mt-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <label class="block text-sm font-bold text-gray-700 mb-2">
+                    4. 網頁標題（自動讀取，可修改後套用）
+                </label>
+                <input type="text" id="titleInput" placeholder="選擇檔案後自動讀取原始標題..."
+                       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 shadow-sm text-sm">
+            </div>
+            </div><!-- /settingsPanel -->
+
+            <!-- 動作面板 -->
+            <div id="actionPanel" class="mt-3 hidden bg-green-50 border border-green-200 rounded-md px-3 py-2">
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                    <!-- 狀態 + 按鈕 -->
+                    <span class="text-green-700 font-semibold text-xs flex items-center gap-1 shrink-0">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>成功
+                    </span>
+                    <a id="openTabBtn" href="#" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-1 px-2.5 rounded shrink-0">↗ 另開</a>
+                    <a id="downloadBtn" href="#" download="調整後的課程計畫首頁.html" class="bg-gray-700 hover:bg-gray-800 text-white text-xs font-bold py-1 px-2.5 rounded shrink-0">⬇ 下載</a>
+
+                    <span class="text-gray-300 shrink-0">│</span>
+
+                    <!-- 風格 -->
+                    <div class="flex items-center gap-1 shrink-0">
+                        <span class="text-gray-500 text-xs">風格</span>
+                        <select id="liveThemeSelect" class="border border-gray-300 text-xs rounded px-1.5 py-0.5 bg-white">
+                            <optgroup label="── 單色系 ──">
+                                <option value="blue">🟦 專業藍（推薦）</option>
+                                <option value="green">🟩 典雅綠</option>
+                                <option value="orange">🟧 溫暖橘</option>
+                                <option value="red">🟥 活力紅</option>
+                                <option value="purple">🟪 柔和紫</option>
+                                <option value="teal">🩵 清新青</option>
+                            </optgroup>
+                            <optgroup label="── 專業版 ──">
+                                <option value="pro-classic">🗞️ 古典報紙</option>
+                                <option value="pro-forest">🌲 原野商務</option>
+                            </optgroup>
+                            <optgroup label="── 活潑版 ──">
+                                <option value="fun-ocean">🌊 海洋渲染</option>
+                                <option value="fun-milktea">🧋 奶茶無印</option>
+                                <option value="fun-candy">🍭 糖果彩虹</option>
+                            </optgroup>
+                            <optgroup label="── 其他 ──">
+                                <option value="none">⚪ 保留 Word 樣式</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <!-- 字型 -->
+                    <div class="flex items-center gap-1 shrink-0">
+                        <span class="text-gray-500 text-xs">字型</span>
+                        <select id="fontSelect" class="border border-gray-300 text-xs rounded px-1.5 py-0.5 bg-white">
+                            <option value="default">預設字型</option>
+                            <option value="serif">思源宋體</option>
+                            <option value="wenkai">霞鶩文楷</option>
+                            <option value="naikai">內海字體</option>
+                            <option value="taipei">台北黑體</option>
+                            <option value="kai">標楷體</option>
+                            <option value="ming">新細明體</option>
+                        </select>
+                    </div>
+
+                    <span class="text-gray-300 shrink-0">│</span>
+
+                    <!-- 標題字級 -->
+                    <div class="flex items-center gap-1 shrink-0">
+                        <span class="text-gray-500 text-xs">標</span>
+                        <button id="headingDecBtn" class="cbtn">－</button>
+                        <span id="headingSizeDisplay" class="cval">16</span>
+                        <button id="headingIncBtn" class="cbtn">＋</button>
+                    </div>
+                    <!-- 內文字級 -->
+                    <div class="flex items-center gap-1 shrink-0">
+                        <span class="text-gray-500 text-xs">文</span>
+                        <button id="bodyDecBtn" class="cbtn">－</button>
+                        <span id="bodySizeDisplay" class="cval">14</span>
+                        <button id="bodyIncBtn" class="cbtn">＋</button>
+                    </div>
+                    <!-- 行高 -->
+                    <div class="flex items-center gap-1 shrink-0">
+                        <span class="text-gray-500 text-xs">行高</span>
+                        <button id="rowHeightDecBtn" class="cbtn">－</button>
+                        <span id="rowHeightDisplay" class="cval">8</span>
+                        <button id="rowHeightIncBtn" class="cbtn">＋</button>
+                    </div>
+                    <!-- 格線 -->
+                    <div class="flex items-center gap-1 shrink-0">
+                        <span class="text-gray-500 text-xs">框</span>
+                        <button id="borderDecBtn" class="cbtn">－</button>
+                        <span id="borderWidthDisplay" class="cval">1</span>
+                        <button id="borderIncBtn" class="cbtn">＋</button>
+                        <input type="color" id="borderColorPicker" value="#d1d5db" title="格線顏色" class="w-5 h-5 rounded cursor-pointer border-0 p-0 shrink-0">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 預覽畫面區 -->
+    <div class="flex-grow w-full relative bg-white">
+        <div id="placeholder" class="absolute inset-0 flex items-center justify-center text-gray-400 flex-col">
+            <svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            <p class="text-lg">請完成上方步驟，並點擊「套用並顯示」</p>
+        </div>
+        <iframe id="previewFrame" class="w-full h-full absolute inset-0 hidden"></iframe>
+    </div>
+
+    <script>
+        // ═══════════════════════════════════════════════════
+        // 主題 CSS 定義
+        // ═══════════════════════════════════════════════════
+        const themes = {
+
+            // ── 單色系 ──────────────────────────────────────
+            blue: `
+                body { font-family:'Noto Sans TC',sans-serif !important; padding:20px; background:#f4f7f6; color:#333; line-height:1.6; overflow-x:hidden; }
+                table { width:100% !important; table-layout:fixed !important; border-collapse:collapse !important; background:#fff; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1); border-radius:8px; overflow:hidden; word-wrap:break-word; }
+                td, th { padding:8px 12px !important; border:1px solid #e5e7eb !important; text-align:left; word-break:break-word; overflow-wrap:break-word; line-height:1.6; }
+                tr:first-child td, thead td, th { background-color:#1e3a8a !important; color:#fff !important; font-weight:bold !important; }
+                tr:first-child p, tr:first-child span { color:#fff !important; }
+                tr:nth-child(even):not(:first-child) td:not(.theme-header-cell) { background-color:#f8fafc !important; }
+                tr:hover:not(:first-child) td:not(.theme-header-cell) { background-color:#eff6ff !important; }
+                a { color:#2563eb !important; text-decoration:none !important; font-weight:bold !important; }
+                a:hover { text-decoration:underline !important; color:#1d4ed8 !important; }
+                td.theme-header-cell { background-color:#1e3a8a !important; color:#fff !important; font-weight:bold !important; }
+                td.theme-header-cell * { color:#fff !important; background-color:transparent !important; }
+            `,
+            green: `
+                body { font-family:'Noto Sans TC',sans-serif !important; padding:20px; background:#f0fdf4; color:#333; line-height:1.6; overflow-x:hidden; }
+                table { width:100% !important; table-layout:fixed !important; border-collapse:collapse !important; background:#fff; margin-bottom:20px; box-shadow:0 2px 4px rgba(0,0,0,0.05); word-wrap:break-word; }
+                td, th { padding:8px 12px !important; border:1px solid #d1fae5 !important; text-align:left; word-break:break-word; overflow-wrap:break-word; line-height:1.6; }
+                tr:first-child td, thead td, th { background-color:#065f46 !important; color:#fff !important; font-weight:bold !important; border-color:#065f46 !important; }
+                tr:first-child p, tr:first-child span { color:#fff !important; }
+                tr:nth-child(even):not(:first-child) td:not(.theme-header-cell) { background-color:#ecfdf5 !important; }
+                tr:hover:not(:first-child) td:not(.theme-header-cell) { background-color:#d1fae5 !important; }
+                a { color:#059669 !important; text-decoration:none !important; font-weight:bold !important; }
+                a:hover { text-decoration:underline !important; color:#047857 !important; }
+                td.theme-header-cell { background-color:#065f46 !important; color:#fff !important; font-weight:bold !important; border-color:#065f46 !important; }
+                td.theme-header-cell * { color:#fff !important; background-color:transparent !important; }
+            `,
+            orange: `
+                body { font-family:'Noto Sans TC',sans-serif !important; padding:20px; background:#fff7ed; color:#333; line-height:1.6; overflow-x:hidden; }
+                table { width:100% !important; table-layout:fixed !important; border-collapse:collapse !important; background:#fff; margin-bottom:20px; border:2px solid #fdba74 !important; word-wrap:break-word; }
+                td, th { padding:8px 12px !important; border:1px solid #fed7aa !important; text-align:left; word-break:break-word; overflow-wrap:break-word; line-height:1.6; }
+                tr:first-child td, thead td, th { background-color:#c2410c !important; color:#fff !important; font-weight:bold !important; }
+                tr:first-child p, tr:first-child span { color:#fff !important; }
+                tr:nth-child(even):not(:first-child) td:not(.theme-header-cell) { background-color:#ffedd5 !important; }
+                tr:hover:not(:first-child) td:not(.theme-header-cell) { background-color:#fed7aa !important; }
+                a { color:#ea580c !important; text-decoration:none !important; font-weight:bold !important; }
+                a:hover { text-decoration:underline !important; color:#c2410c !important; }
+                td.theme-header-cell { background-color:#c2410c !important; color:#fff !important; font-weight:bold !important; }
+                td.theme-header-cell * { color:#fff !important; background-color:transparent !important; }
+            `,
+            red: `
+                body { font-family:'Noto Sans TC',sans-serif !important; padding:20px; background:#fff5f5; color:#333; line-height:1.6; overflow-x:hidden; }
+                table { width:100% !important; table-layout:fixed !important; border-collapse:collapse !important; background:#fff; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1); border-radius:8px; overflow:hidden; word-wrap:break-word; }
+                td, th { padding:8px 12px !important; border:1px solid #fecaca !important; text-align:left; word-break:break-word; overflow-wrap:break-word; line-height:1.6; }
+                tr:first-child td, thead td, th { background-color:#991b1b !important; color:#fff !important; font-weight:bold !important; }
+                tr:first-child p, tr:first-child span { color:#fff !important; }
+                tr:nth-child(even):not(:first-child) td:not(.theme-header-cell) { background-color:#fff5f5 !important; }
+                tr:hover:not(:first-child) td:not(.theme-header-cell) { background-color:#fee2e2 !important; }
+                a { color:#dc2626 !important; text-decoration:none !important; font-weight:bold !important; }
+                a:hover { text-decoration:underline !important; color:#991b1b !important; }
+                td.theme-header-cell { background-color:#991b1b !important; color:#fff !important; font-weight:bold !important; }
+                td.theme-header-cell * { color:#fff !important; background-color:transparent !important; }
+            `,
+            purple: `
+                body { font-family:'Noto Sans TC',sans-serif !important; padding:20px; background:#faf5ff; color:#333; line-height:1.6; overflow-x:hidden; }
+                table { width:100% !important; table-layout:fixed !important; border-collapse:collapse !important; background:#fff; margin-bottom:20px; box-shadow:0 1px 3px rgba(0,0,0,0.1); border-radius:8px; overflow:hidden; word-wrap:break-word; }
+                td, th { padding:8px 12px !important; border:1px solid #e9d5ff !important; text-align:left; word-break:break-word; overflow-wrap:break-word; line-height:1.6; }
+                tr:first-child td, thead td, th { background-color:#6d28d9 !important; color:#fff !important; font-weight:bold !important; }
+                tr:first-child p, tr:first-child span { color:#fff !important; }
+                tr:nth-child(even):not(:first-child) td:not(.theme-header-cell) { background-color:#f5f3ff !important; }
+                tr:hover:not(:first-child) td:not(.theme-header-cell) { background-color:#ede9fe !important; }
+                a { color:#7c3aed !important; text-decoration:none !important; font-weight:bold !important; }
+                a:hover { text-decoration:underline !important; color:#6d28d9 !important; }
+                td.theme-header-cell { background-color:#6d28d9 !important; color:#fff !important; font-weight:bold !important; }
+                td.theme-header-cell * { color:#fff !important; background-color:transparent !important; }
+            `,
+            teal: `
+                body { font-family:'Noto Sans TC',sans-serif !important; padding:20px; background:#f0fdfa; color:#333; line-height:1.6; overflow-x:hidden; }
+                table { width:100% !important; table-layout:fixed !important; border-collapse:collapse !important; background:#fff; margin-bottom:20px; box-shadow:0 1px 4px rgba(0,0,0,0.08); border-radius:8px; overflow:hidden; word-wrap:break-word; }
+                td, th { padding:8px 12px !important; border:1px solid #99f6e4 !important; text-align:left; word-break:break-word; overflow-wrap:break-word; line-height:1.6; }
+                tr:first-child td, thead td, th { background-color:#0f766e !important; color:#fff !important; font-weight:bold !important; }
+                tr:first-child p, tr:first-child span { color:#fff !important; }
+                tr:nth-child(even):not(:first-child) td:not(.theme-header-cell) { background-color:#f0fdfa !important; }
+                tr:hover:not(:first-child) td:not(.theme-header-cell) { background-color:#ccfbf1 !important; }
+                a { color:#0d9488 !important; text-decoration:none !important; font-weight:bold !important; }
+                a:hover { text-decoration:underline !important; color:#0f766e !important; }
+                td.theme-header-cell { background-color:#0f766e !important; color:#fff !important; font-weight:bold !important; }
+                td.theme-header-cell * { color:#fff !important; background-color:transparent !important; }
+            `,
+
+            // ── 專業版 ── 各有獨特視覺語言 ─────────────────
+            'pro-classic': `
+                body { font-family:Georgia,'Times New Roman',serif !important; padding:20px; background:#fdf8ee; color:#111; line-height:1.7; overflow-x:hidden; }
+                table { width:100% !important; table-layout:fixed !important; border-collapse:collapse !important; background:#fdf8ee; margin-bottom:24px; border-top:3px solid #111 !important; border-bottom:2px solid #111 !important; box-shadow:none; word-wrap:break-word; }
+                td, th { padding:8px 12px !important; border:1px solid #aaa !important; text-align:left; word-break:break-word; overflow-wrap:break-word; line-height:1.7; }
+                tr:first-child td, thead td, th { background-color:#111 !important; color:#fdf8ee !important; font-weight:bold !important; letter-spacing:0.06em; border-color:#111 !important; }
+                tr:first-child p, tr:first-child span { color:#fdf8ee !important; }
+                tr:nth-child(even):not(:first-child) td:not(.theme-header-cell) { background-color:#f5edd8 !important; }
+                tr:hover:not(:first-child) td:not(.theme-header-cell) { background-color:#ede0c4 !important; }
+                a { color:#5c3d1e !important; text-decoration:underline !important; font-weight:bold !important; }
+                a:hover { color:#3a2310 !important; }
+                td.theme-header-cell { background-color:#111 !important; color:#fdf8ee !important; font-weight:bold !important; letter-spacing:0.06em; border-color:#111 !important; }
+                td.theme-header-cell * { color:#fdf8ee !important; background-color:transparent !important; }
+            `,
+            'pro-forest': `
+                body { font-family:'Noto Sans TC',sans-serif !important; padding:20px; background:#f8f5ee; color:#2d2a1e; line-height:1.6; overflow-x:hidden; }
+                table { width:100% !important; table-layout:fixed !important; border-collapse:collapse !important; background:#fffef9; margin-bottom:20px; box-shadow:0 2px 12px rgba(60,80,40,0.12); border-radius:6px; overflow:hidden; word-wrap:break-word; border-left:5px solid #d4a827 !important; }
+                td, th { padding:8px 12px !important; border:1px solid #d6cbab !important; text-align:left; word-break:break-word; overflow-wrap:break-word; line-height:1.6; }
+                tr:first-child td, thead td, th { background-color:#2d5016 !important; color:#fef9e7 !important; font-weight:bold !important; border-color:#2d5016 !important; }
+                tr:first-child p, tr:first-child span { color:#fef9e7 !important; }
+                tr:nth-child(even):not(:first-child) td:not(.theme-header-cell) { background-color:#f4f1e8 !important; }
+                tr:hover:not(:first-child) td:not(.theme-header-cell) { background-color:#e8e2ce !important; }
+                a { color:#6b4f1a !important; text-decoration:none !important; font-weight:bold !important; }
+                a:hover { text-decoration:underline !important; color:#4a3612 !important; }
+                td.theme-header-cell { background-color:#2d5016 !important; color:#fef9e7 !important; font-weight:bold !important; border-color:#2d5016 !important; }
+                td.theme-header-cell * { color:#fef9e7 !important; background-color:transparent !important; }
+            `,
+
+            // ── 活潑版 ── 各有獨特視覺語言 ─────────────────
+            'fun-ocean': `
+                body { font-family:'Noto Sans TC',sans-serif !important; padding:20px; background:#e0f7fa; color:#004d66; line-height:1.6; overflow-x:hidden; }
+                table { width:100% !important; table-layout:fixed !important; border-collapse:collapse !important; background:#fff; margin-bottom:20px; box-shadow:0 4px 20px rgba(0,100,150,0.18); border-radius:12px; overflow:hidden; word-wrap:break-word; border:2px solid #4dd0e1 !important; }
+                td, th { padding:8px 12px !important; border:1px solid #80deea !important; text-align:left; word-break:break-word; overflow-wrap:break-word; line-height:1.6; }
+                tr:first-child td, thead td, th { background:linear-gradient(135deg,#0c4a6e 0%,#0e7490 60%,#0891b2 100%) !important; color:#e0f7fa !important; font-weight:bold !important; border-color:#0e7490 !important; }
+                tr:first-child p, tr:first-child span { color:#e0f7fa !important; }
+                tr:nth-child(odd):not(:first-child) td:not(.theme-header-cell) { background-color:#f0fdff !important; }
+                tr:nth-child(even):not(:first-child) td:not(.theme-header-cell) { background-color:#e0f7fa !important; }
+                tr:hover:not(:first-child) td:not(.theme-header-cell) { background-color:#b2ebf2 !important; }
+                a { color:#0e7490 !important; text-decoration:none !important; font-weight:bold !important; }
+                a:hover { text-decoration:underline !important; color:#0c4a6e !important; }
+                td.theme-header-cell { background:linear-gradient(135deg,#0c4a6e 0%,#0e7490 60%,#0891b2 100%) !important; color:#e0f7fa !important; font-weight:bold !important; border-color:#0e7490 !important; }
+                td.theme-header-cell * { color:#e0f7fa !important; background-color:transparent !important; }
+            `,
+            'fun-milktea': `
+                body { font-family:'Noto Sans TC',sans-serif !important; padding:20px; background:#faf7f2; color:#5c4a3b; line-height:1.6; overflow-x:hidden; }
+                table { width:100% !important; table-layout:fixed !important; border-collapse:collapse !important; background:#fff; margin-bottom:20px; box-shadow:0 1px 6px rgba(107,83,68,0.1); border-radius:4px; overflow:hidden; word-wrap:break-word; border:1px solid #d4b896 !important; }
+                td, th { padding:8px 12px !important; border:1px solid #e5d5c1 !important; text-align:left; word-break:break-word; overflow-wrap:break-word; line-height:1.6; }
+                tr:first-child td, thead td, th { background-color:#6b5344 !important; color:#faf7f2 !important; font-weight:bold !important; border-color:#6b5344 !important; }
+                tr:first-child p, tr:first-child span { color:#faf7f2 !important; }
+                tr:nth-child(even):not(:first-child) td:not(.theme-header-cell) { background-color:#f5ede3 !important; }
+                tr:hover:not(:first-child) td:not(.theme-header-cell) { background-color:#ede0d0 !important; }
+                a { color:#7c5c40 !important; text-decoration:none !important; font-weight:bold !important; }
+                a:hover { text-decoration:underline !important; color:#5c4a3b !important; }
+                td.theme-header-cell { background-color:#6b5344 !important; color:#faf7f2 !important; font-weight:bold !important; border-color:#6b5344 !important; }
+                td.theme-header-cell * { color:#faf7f2 !important; background-color:transparent !important; }
+            `,
+            'fun-candy': `
+                body { font-family:'Noto Sans TC',sans-serif !important; padding:20px; background:#fff0f6; color:#4a1942; line-height:1.6; overflow-x:hidden; }
+                table { width:100% !important; table-layout:fixed !important; border-collapse:collapse !important; background:#fff; margin-bottom:20px; box-shadow:0 4px 16px rgba(219,39,119,0.12); border-radius:16px; overflow:hidden; word-wrap:break-word; border:2px solid #f9a8d4 !important; }
+                td, th { padding:8px 12px !important; border:1px solid #fbcfe8 !important; text-align:left; word-break:break-word; overflow-wrap:break-word; line-height:1.6; }
+                tr:first-child td, thead td, th { background-color:#be185d !important; color:#fff !important; font-weight:bold !important; border-color:#be185d !important; }
+                tr:first-child p, tr:first-child span { color:#fff !important; }
+                tr:nth-child(3n+2):not(:first-child) td:not(.theme-header-cell) { background-color:#f0fdf4 !important; }
+                tr:nth-child(3n+3):not(:first-child) td:not(.theme-header-cell) { background-color:#faf5ff !important; }
+                tr:nth-child(3n+4):not(:first-child) td:not(.theme-header-cell) { background-color:#fffbeb !important; }
+                tr:hover:not(:first-child) td:not(.theme-header-cell) { background-color:#fce7f3 !important; }
+                a { color:#db2777 !important; text-decoration:none !important; font-weight:bold !important; }
+                a:hover { text-decoration:underline !important; color:#be185d !important; }
+                td.theme-header-cell { background-color:#be185d !important; color:#fff !important; font-weight:bold !important; border-color:#be185d !important; }
+                td.theme-header-cell * { color:#fff !important; background-color:transparent !important; }
+            `
+        };
+
+        // ═══════════════════════════════════════════════════
+        // 字型設定
+        // ═══════════════════════════════════════════════════
+        const FONTS = {
+            default: { family: null, url: null },
+            serif:  { family: "'Noto Serif TC', serif",
+                      url: 'https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap' },
+            wenkai: { family: "'LXGW WenKai Screen', serif",
+                      url: 'https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css' },
+            naikai: { family: "'NaikaiFont', serif",
+                      face: `@font-face{font-family:'NaikaiFont';src:url('https://cdn.jsdelivr.net/gh/max32002/naikaifont@master/webfont/NaikaiFont-Regular.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap;}@font-face{font-family:'NaikaiFont';src:url('https://cdn.jsdelivr.net/gh/max32002/naikaifont@master/webfont/NaikaiFont-Bold.woff2') format('woff2');font-weight:700;font-style:normal;font-display:swap;}` },
+            taipei: { family: "'TaipeiSansTCBeta', sans-serif",
+                      face: `@font-face{font-family:'TaipeiSansTCBeta';src:url('https://cdn.jsdelivr.net/gh/max32002/tpe-sans@main/WebFont/Regular/TaipeiSansTCBeta-Regular.woff2') format('woff2');font-weight:normal;}` },
+            kai:    { family: "'DFKai-SB','標楷體','Kaiti TC', serif", url: null },
+            ming:   { family: "'PMingLiU','新細明體','MingLiU', serif", url: null },
+        };
+        let currentFont = 'default';
+
+        function getFontFamilyCSS() {
+            const f = FONTS[currentFont];
+            if (!f || !f.family) return '';
+            return `body,table,td,th,p,span,div,a,li { font-family:${f.family} !important; }`;
+        }
+
+        // ═══════════════════════════════════════════════════
+        // 狀態變數
+        // ═══════════════════════════════════════════════════
+        let previousObjectUrl = null;
+        let baseHtmlForDownload = null;
+        let currentLiveTheme = 'blue';
+
+        // 字型大小
+        const HEADING_SIZES = [12, 13, 14, 15, 16, 18, 20, 22, 24, 28];
+        const BODY_SIZES    = [10, 11, 12, 13, 14, 15, 16, 18, 20, 22];
+        let headingIdx = 4;
+        let bodyIdx    = 4;
+
+        // 行高（垂直 padding）
+        const ROW_PADDINGS = [2, 4, 6, 8, 10, 12, 16, 20, 24];
+        let rowPaddingIdx = 3;
+        let rowHeightCtrlActive = false;
+
+        // 格線
+        const BORDER_WIDTHS = [0.5, 1, 1.5, 2, 3];
+        let borderWidthIdx = 1;
+        let borderColor = '#d1d5db';
+        let borderCtrlActive = false;
+
+        // ═══════════════════════════════════════════════════
+        // CSS 產生函式
+        // ═══════════════════════════════════════════════════
+        function getFontCtrlCSS() {
+            const h = HEADING_SIZES[headingIdx];
+            const b = BODY_SIZES[bodyIdx];
+            return `
+                th, tr:first-child td, td.theme-header-cell, h1, h2, h3, h4, h5, h6,
+                .theme-page-title, .theme-page-title * { font-size:${h}px !important; }
+                td:not(.theme-header-cell), p:not(.theme-page-title), li, span:not(.theme-page-title *),
+                div:not(.theme-page-title) { font-size:${b}px !important; }
+            `;
+        }
+
+        function getRowHeightCSS() {
+            if (!rowHeightCtrlActive) return '';
+            const p = ROW_PADDINGS[rowPaddingIdx];
+            const lh = p <= 2 ? 1.1 : p <= 6 ? 1.3 : p <= 10 ? 1.5 : 1.6;
+            const ph = Math.max(4, p * 2);
+            return `td,th{padding:${p}px ${ph}px !important;line-height:${lh} !important;}
+td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important;}`;
+        }
+
+        function getBorderCtrlCSS() {
+            if (!borderCtrlActive) return '';
+            const w = BORDER_WIDTHS[borderWidthIdx];
+            const c = borderColor;
+            return `table { border:${w}px solid ${c} !important; } td, th { border:${w}px solid ${c} !important; }`;
+        }
+
+        function updateDownloadBlob() {
+            if (!baseHtmlForDownload) return;
+            if (previousObjectUrl) URL.revokeObjectURL(previousObjectUrl);
+            const themeCSS = (currentLiveTheme !== 'none') ? (themes[currentLiveTheme] || '') : '';
+            const fontCSS  = getFontFamilyCSS();
+            const fontF    = FONTS[currentFont];
+            let html = baseHtmlForDownload
+                .replace('<style id="__theme-style__"></style>',
+                    `<style id="__theme-style__">${themeCSS}</style>`);
+            // Inject web font link or @font-face if needed
+            if (fontF && fontF.url) {
+                html = html.replace('</head>', `<link rel="stylesheet" href="${fontF.url}">\n</head>`);
+            }
+            const faceCss = (fontF && fontF.face) ? fontF.face : '';
+            html = html.replace('</head>',
+                `<style id="__font-face-ctrl__">${faceCss}</style>\n` +
+                `<style id="__font-family-ctrl__">${fontCSS}</style>\n` +
+                `<style id="__font-ctrl__">${getFontCtrlCSS()}</style>\n` +
+                `<style id="__row-height-ctrl__">${getRowHeightCSS()}</style>\n` +
+                `<style id="__border-ctrl__">${getBorderCtrlCSS()}</style>\n</head>`);
+            const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+            const objectUrl = URL.createObjectURL(blob);
+            previousObjectUrl = objectUrl;
+            document.getElementById('openTabBtn').href = objectUrl;
+            document.getElementById('downloadBtn').href = objectUrl;
+        }
+
+        function updateIframeStyle(id, css) {
+            const iframe = document.getElementById('previewFrame');
+            if (!iframe.contentDocument || !iframe.contentDocument.head) return;
+            let el = iframe.contentDocument.getElementById(id);
+            if (!el) {
+                el = iframe.contentDocument.createElement('style');
+                el.id = id;
+                iframe.contentDocument.head.appendChild(el);
+            }
+            el.innerHTML = css;
+        }
+
+        // ═══════════════════════════════════════════════════
+        // 套用函式
+        // ═══════════════════════════════════════════════════
+        function applyFontSize() {
+            document.getElementById('headingSizeDisplay').textContent = HEADING_SIZES[headingIdx];
+            document.getElementById('bodySizeDisplay').textContent    = BODY_SIZES[bodyIdx];
+            updateIframeStyle('__font-ctrl__', getFontCtrlCSS());
+            updateDownloadBlob();
+        }
+
+        function applyRowHeight() {
+            rowHeightCtrlActive = true;
+            document.getElementById('rowHeightDisplay').textContent = ROW_PADDINGS[rowPaddingIdx];
+            updateIframeStyle('__row-height-ctrl__', getRowHeightCSS());
+            updateDownloadBlob();
+        }
+
+        function applyBorderStyle() {
+            borderCtrlActive = true;
+            document.getElementById('borderWidthDisplay').textContent = BORDER_WIDTHS[borderWidthIdx];
+            updateIframeStyle('__border-ctrl__', getBorderCtrlCSS());
+            updateDownloadBlob();
+        }
+
+        function applyFont() {
+            const f = FONTS[currentFont];
+            const iframe = document.getElementById('previewFrame');
+            if (f && iframe.contentDocument && iframe.contentDocument.head) {
+                if (f.url && !iframe.contentDocument.head.querySelector(`link[href="${f.url}"]`)) {
+                    const lk = iframe.contentDocument.createElement('link');
+                    lk.rel = 'stylesheet'; lk.href = f.url;
+                    iframe.contentDocument.head.appendChild(lk);
+                }
+                if (f.face) {
+                    updateIframeStyle('__font-face-ctrl__', f.face);
+                }
+            }
+            updateIframeStyle('__font-family-ctrl__', getFontFamilyCSS());
+            updateDownloadBlob();
+        }
+
+        // ═══════════════════════════════════════════════════
+        // 主渲染邏輯
+        // ═══════════════════════════════════════════════════
+        document.getElementById('renderBtn').addEventListener('click', () => {
+            const fileInput   = document.getElementById('fileInput');
+            let rawBaseUrl    = document.getElementById('baseUrl').value.trim();
+            const encoding    = document.getElementById('encoding').value;
+            const iframe      = document.getElementById('previewFrame');
+            const placeholder = document.getElementById('placeholder');
+            const actionPanel = document.getElementById('actionPanel');
+
+            if (fileInput.files.length === 0) {
+                alert('請先選擇 .htm 或 .html 檔案！');
+                return;
+            }
+
+            const file   = fileInput.files[0];
+            const reader = new FileReader();
+
+            let cleanBaseUrl = rawBaseUrl;
+            if (cleanBaseUrl.includes('?')) cleanBaseUrl = cleanBaseUrl.split('?')[0];
+
+            reader.onload = function(e) {
+                const parser = new DOMParser();
+                const doc    = parser.parseFromString(e.target.result, 'text/html');
+
+                // 1. 處理超連結
+                doc.querySelectorAll('a').forEach(link => {
+                    const href = link.getAttribute('href');
+                    if (href && !href.startsWith('http') && !href.startsWith('mailto:') &&
+                        !href.startsWith('#') && !href.startsWith('data:')) {
+                        if (cleanBaseUrl) {
+                            let norm = href.replace(/\\/g, '/');
+                            try { norm = decodeURIComponent(norm); } catch(err) {}
+                            const parts  = norm.split('/');
+                            const fn     = parts.pop();
+                            const folder = parts.join('/');
+                            let newHref  = cleanBaseUrl + '?';
+                            if (folder) newHref += 'folder=' + encodeURIComponent(folder) + '&';
+                            newHref += 'file=' + encodeURIComponent(fn);
+                            link.setAttribute('href', newHref);
+                        }
+                        link.setAttribute('target', '_blank');
+                    }
+                });
+
+                // 2. Google 字體
+                if (!doc.head.querySelector('link[href*="fonts.googleapis.com"]')) {
+                    const fl = doc.createElement('link');
+                    fl.rel  = 'stylesheet';
+                    fl.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap';
+                    doc.head.appendChild(fl);
+                }
+
+                // 2b. 移除 Word 原始 <style> 標籤（避免干擾主題顏色）
+                doc.querySelectorAll('style').forEach(s => s.remove());
+
+                // 3a. 移除固定寬高，響應式（所有主題）
+                doc.querySelectorAll('table, col, colgroup').forEach(el => {
+                    el.removeAttribute('width');
+                    if (el.style) { el.style.width = ''; el.style.minWidth = ''; }
+                });
+                doc.querySelectorAll('td, th').forEach(el => {
+                    el.removeAttribute('width');
+                    if (el.style) {
+                        el.style.width = ''; el.style.minWidth = ''; el.style.maxWidth = '';
+                        // 清除行內 padding，確保行高控制能作用於全表格
+                        el.style.padding = '';
+                        el.style.paddingTop = ''; el.style.paddingBottom = '';
+                        el.style.paddingLeft = ''; el.style.paddingRight = '';
+                    }
+                });
+                doc.querySelectorAll('tr').forEach(el => {
+                    el.removeAttribute('height');
+                    if (el.style) el.style.height = '';
+                });
+                const baseRespStyle = doc.createElement('style');
+                baseRespStyle.innerHTML = `body{overflow-x:hidden;} table{width:100% !important;table-layout:fixed !important;word-wrap:break-word;} td,th{word-break:break-word;overflow-wrap:break-word;} td p,td div,td li,th p,th div,th li{margin-top:0 !important;margin-bottom:0 !important;}`;
+                doc.head.appendChild(baseRespStyle);
+
+                // 3a-2+3. 年級欄等寬 colgroup（含年級列 colspan 均等化）
+                const gradeRe = /^[一二三四五六七八九十]年級$/;
+                const normalizeLinkIndexTable = (table) => {
+                    const rows = Array.from(table.rows);
+                    if (!rows.length) return;
+
+                    const hasGradeRow = rows.some(row =>
+                        Array.from(row.cells).filter(cell => gradeRe.test(cell.textContent.trim())).length >= 2
+                    );
+                    const linkCount = table.querySelectorAll('a').length;
+                    if (!hasGradeRow && linkCount < 3) return;
+
+                    const maxCells = Math.max(...rows.map(row => row.cells.length));
+                    if (maxCells < 2) return;
+
+                    rows.forEach(row => {
+                        const cells = Array.from(row.cells);
+                        if (!cells.length) return;
+
+                        const gradeCells = cells.filter(cell => gradeRe.test(cell.textContent.trim()));
+                        if (gradeCells.length >= 2) {
+                            const base = Math.floor(maxCells / gradeCells.length);
+                            const rem = maxCells % gradeCells.length;
+                            gradeCells.forEach((cell, i) => {
+                                cell.colSpan = Math.max(1, base + (i < rem ? 1 : 0));
+                                cell.style.width = `${(100 / gradeCells.length).toFixed(3)}%`;
+                            });
+                            cells.forEach(cell => {
+                                if (!gradeCells.includes(cell) && cell.textContent.trim() === '') cell.remove();
+                            });
+                            return;
+                        }
+
+                        if (cells.length === 1) {
+                            cells[0].colSpan = maxCells;
+                            cells[0].style.width = '100%';
+                            return;
+                        }
+
+                        const base = Math.floor(maxCells / cells.length);
+                        const rem = maxCells % cells.length;
+                        cells.forEach((cell, i) => {
+                            cell.colSpan = Math.max(1, base + (i < rem ? 1 : 0));
+                            cell.style.width = `${(100 / cells.length).toFixed(3)}%`;
+                        });
+                    });
+                };
+                doc.querySelectorAll('table').forEach(table => {
+                    normalizeLinkIndexTable(table);
+
+                    // ── 計算 maxCols ──
+                    let maxCols = 0;
+                    table.querySelectorAll('tr').forEach(row => {
+                        const n = Array.from(row.cells).reduce((s, c) => s + (c.colSpan || 1), 0);
+                        if (n > maxCols) maxCols = n;
+                    });
+                    if (maxCols < 2) return;
+
+                    // ── 以 rowspan 追蹤找出年級格的實際欄位 ──
+                    const rsLeft = new Array(maxCols).fill(0);
+                    let gradeCols = null;
+                    for (const row of Array.from(table.rows)) {
+                        for (let c = 0; c < maxCols; c++) { if (rsLeft[c] > 0) rsLeft[c]--; }
+                        let col = 0;
+                        const found = [];
+                        for (const cell of Array.from(row.cells)) {
+                            while (col < maxCols && rsLeft[col] > 0) col++;
+                            if (col >= maxCols) break;
+                            const cs = cell.colSpan || 1, rs = cell.rowSpan || 1;
+                            if (gradeRe.test(cell.textContent.trim())) found.push({ cell, startCol: col, cs });
+                            for (let c = col; c < Math.min(col + cs, maxCols); c++) rsLeft[c] = Math.max(rsLeft[c], rs);
+                            col += cs;
+                        }
+                        if (found.length >= 2) { gradeCols = found; break; }
+                    }
+
+                    // ── 吸收年級格後的空白欄（僅限完全空白的 td）──
+                    if (gradeCols) {
+                        for (const g of gradeCols) {
+                            let nx = g.cell.nextElementSibling;
+                            while (nx && nx.textContent.trim() === '' && !gradeRe.test(nx.textContent.trim())) {
+                                g.cs += (nx.colSpan || 1);
+                                g.cell.colSpan = g.cs;
+                                const rem = nx; nx = nx.nextElementSibling; rem.remove();
+                            }
+                        }
+                    }
+
+                    // ── 重新計算總跨欄並均等化年級格 colspan ──
+                    let colWidths = new Array(maxCols).fill(100 / maxCols);
+                    if (gradeCols && gradeCols.length >= 2) {
+                        const firstCol = gradeCols[0].startCol;
+                        const last = gradeCols[gradeCols.length - 1];
+                        const lastCol = last.startCol + last.cs - 1;
+                        const totalBase = lastCol - firstCol + 1;
+                        const n = gradeCols.length;
+                        // 設各年級格 colspan 均等（整除）
+                        const base = Math.floor(totalBase / n), rem = totalBase % n;
+                        gradeCols.forEach((g, i) => { g.cell.colSpan = base + (i < rem ? 1 : 0); });
+                        // 調整 colgroup：年級範圍內每基欄寬度以視覺等寬為準
+                        const totalGradeW = totalBase * (100 / maxCols);
+                        let c2 = firstCol;
+                        for (let i = 0; i < n; i++) {
+                            const span = base + (i < rem ? 1 : 0);
+                            const perBase = totalGradeW / totalBase; // already equal per base col
+                            for (let c = 0; c < span; c++) { colWidths[c2++] = perBase; }
+                        }
+                    }
+
+                    // ── 注入 colgroup ──
+                    table.querySelectorAll('colgroup, col').forEach(e => e.remove());
+                    const cg = doc.createElement('colgroup');
+                    colWidths.forEach(w => {
+                        const co = doc.createElement('col');
+                        co.style.width = w.toFixed(3) + '%';
+                        cg.appendChild(co);
+                    });
+                    table.insertBefore(cg, table.firstChild);
+                });
+
+                // 3b. 移除 Word 所有行內顏色格式（非 none 主題：螢光底色、紅字等一併清除）
+                const chosenTheme = document.getElementById('liveThemeSelect').value;
+                if (chosenTheme !== 'none') {
+                    doc.querySelectorAll('*').forEach(el => {
+                        el.removeAttribute('bgcolor');
+                        el.removeAttribute('color');
+                        if (el.style) {
+                            el.style.color = '';
+                            el.style.backgroundColor = '';
+                            el.style.background = '';
+                        }
+                    });
+                }
+
+                // 3c. 標題格偵測（A~L 開頭），年級格補色 — 不整列染色
+                doc.querySelectorAll('table').forEach(table => {
+                    table.querySelectorAll('tr').forEach((row, i) => {
+                        if (i === 0) return;
+
+                        for (let j = 0; j < row.cells.length; j++) {
+                            const cell    = row.cells[j];
+                            if (!cell) continue;
+                            const rawText = cell.textContent || '';
+                            const match   = rawText.match(/[0-9０-９a-zA-Z一-龥Ａ-Ｚａ-ｚ]/);
+                            if (!match) continue;
+
+                            const firstChar = match[0];
+                            const index     = match.index;
+                            const isLetter  = /^[a-zA-ZＡ-Ｚａ-ｚ]$/.test(firstChar);
+                            if (!isLetter) continue;
+
+                            let checkChar = firstChar.toUpperCase();
+                            if (checkChar >= 'Ａ' && checkChar <= 'Ｚ') {
+                                checkChar = String.fromCharCode(checkChar.charCodeAt(0) - 0xFEE0);
+                            }
+                            if (checkChar < 'A' || checkChar > 'L') continue;
+
+                            const restText    = rawText.substring(index + 1);
+                            const trimmedRest = restText.trim();
+
+                            if (/^[-－_.]\s*\d/.test(trimmedRest)) continue;
+                            if (/^化/.test(trimmedRest)) continue;
+
+                            let isTitle = (trimmedRest.length === 0);
+                            if (!isTitle) {
+                                const nc = restText.match(/[^\s\-⁯﻿　\xA0]/);
+                                if (nc && !/^[a-zA-Z0-9Ａ-Ｚａ-ｚ０-９]$/.test(nc[0])) {
+                                    isTitle = true;
+                                } else if (!nc) {
+                                    isTitle = true;
+                                }
+                            }
+
+                            if (isTitle && rawText.length < 200) {
+                                cell.classList.add('theme-header-cell');
+                            }
+                        }
+
+                        // 同列有 A~L 標題格 → 只補「X年級」格深色，其餘內容格保持不染色
+                        const gradePattern = /^[一二三四五六七八九十]年級$/;
+                        if (Array.from(row.cells).some(c => c.classList.contains('theme-header-cell'))) {
+                            Array.from(row.cells).forEach(c => {
+                                if (gradePattern.test(c.textContent.trim())) {
+                                    c.classList.add('theme-header-cell');
+                                }
+                            });
+                        }
+                    });
+                });
+
+                // 3d. 偵測頁面主標題
+                doc.querySelectorAll('p, h1, h2, h3, h4, h5, h6, div').forEach(el => {
+                    if (el.closest('table')) return;
+                    const txt = el.textContent.trim();
+                    if (txt.length > 0 && txt.length < 80 &&
+                        (txt.includes('學年度') || txt.includes('課程計畫')) &&
+                        (txt.includes('國民小學') || txt.includes('國中') || txt.includes('高中') ||
+                         txt.includes('學校') || txt.includes('總體'))) {
+                        el.classList.add('theme-page-title');
+                    }
+                });
+
+                // 4. 自訂標題
+                const customTitle = document.getElementById('titleInput').value.trim();
+                if (customTitle) doc.title = customTitle;
+
+                // 4b. charset meta
+                const mc = doc.createElement('meta');
+                mc.setAttribute('charset', 'UTF-8');
+                doc.head.insertBefore(mc, doc.head.firstChild);
+
+                // 4c. 加入主題樣式佔位（空白），再存入 baseHtmlForDownload
+                const themeStyleEl = doc.createElement('style');
+                themeStyleEl.id = '__theme-style__';
+                themeStyleEl.innerHTML = '';
+                doc.head.appendChild(themeStyleEl);
+
+                baseHtmlForDownload = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+
+                // 4d. 套用當前主題至 iframe
+                currentLiveTheme = chosenTheme;
+                themeStyleEl.innerHTML = (currentLiveTheme !== 'none') ? (themes[currentLiveTheme] || '') : '';
+
+                // 4e. 重設控制列並加入佔位 style
+                rowHeightCtrlActive = false;
+                rowPaddingIdx = 3;
+                document.getElementById('rowHeightDisplay').textContent = ROW_PADDINGS[rowPaddingIdx];
+                borderCtrlActive = false;
+                borderWidthIdx   = 1;
+                borderColor      = '#d1d5db';
+                document.getElementById('borderColorPicker').value = borderColor;
+                document.getElementById('borderWidthDisplay').textContent = BORDER_WIDTHS[borderWidthIdx];
+                // 重設字型
+                currentFont = 'default';
+                document.getElementById('fontSelect').value = 'default';
+                headingIdx = 4; bodyIdx = 4;
+                document.getElementById('headingSizeDisplay').textContent = HEADING_SIZES[headingIdx];
+                document.getElementById('bodySizeDisplay').textContent    = BODY_SIZES[bodyIdx];
+
+                const fontFamilyStyle = doc.createElement('style');
+                fontFamilyStyle.id    = '__font-family-ctrl__';
+                fontFamilyStyle.innerHTML = getFontFamilyCSS();
+                doc.head.appendChild(fontFamilyStyle);
+
+                const fontSizeStyle = doc.createElement('style');
+                fontSizeStyle.id    = '__font-ctrl__';
+                fontSizeStyle.innerHTML = getFontCtrlCSS();
+                doc.head.appendChild(fontSizeStyle);
+
+                const rowHStyle = doc.createElement('style');
+                rowHStyle.id    = '__row-height-ctrl__';
+                rowHStyle.innerHTML = '';
+                doc.head.appendChild(rowHStyle);
+
+                const borderStyle = doc.createElement('style');
+                borderStyle.id    = '__border-ctrl__';
+                borderStyle.innerHTML = '';
+                doc.head.appendChild(borderStyle);
+
+                // 5. 更新 iframe
+                iframe.srcdoc = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+                placeholder.classList.add('hidden');
+                iframe.classList.remove('hidden');
+
+                // 6. Blob URL
+                updateDownloadBlob();
+                actionPanel.classList.remove('hidden');
+            };
+
+            reader.readAsText(file, encoding);
+        });
+
+        // 選擇檔案時自動讀取標題
+        document.getElementById('fileInput').addEventListener('change', function() {
+            const file = this.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const doc = new DOMParser().parseFromString(e.target.result, 'text/html');
+                if (doc.title) document.getElementById('titleInput').value = doc.title;
+            };
+            reader.readAsText(file, document.getElementById('encoding').value);
+        });
+
+        // ═══════════════════════════════════════════════════
+        // 事件監聽
+        // ═══════════════════════════════════════════════════
+
+        // 即時切換主題
+        document.getElementById('liveThemeSelect').addEventListener('change', (e) => {
+            currentLiveTheme = e.target.value;
+            updateIframeStyle('__theme-style__', currentLiveTheme !== 'none' ? (themes[currentLiveTheme] || '') : '');
+            updateDownloadBlob();
+        });
+
+        // 字型選擇
+        document.getElementById('fontSelect').addEventListener('change', (e) => {
+            currentFont = e.target.value;
+            applyFont();
+        });
+
+        document.getElementById('headingDecBtn').addEventListener('click', () => { if (headingIdx > 0) { headingIdx--; applyFontSize(); } });
+        document.getElementById('headingIncBtn').addEventListener('click', () => { if (headingIdx < HEADING_SIZES.length-1) { headingIdx++; applyFontSize(); } });
+        document.getElementById('bodyDecBtn').addEventListener('click',    () => { if (bodyIdx > 0) { bodyIdx--; applyFontSize(); } });
+        document.getElementById('bodyIncBtn').addEventListener('click',    () => { if (bodyIdx < BODY_SIZES.length-1) { bodyIdx++; applyFontSize(); } });
+
+        document.getElementById('rowHeightDecBtn').addEventListener('click', () => { if (rowPaddingIdx > 0) { rowPaddingIdx--; applyRowHeight(); } });
+        document.getElementById('rowHeightIncBtn').addEventListener('click', () => { if (rowPaddingIdx < ROW_PADDINGS.length-1) { rowPaddingIdx++; applyRowHeight(); } });
+
+        document.getElementById('borderDecBtn').addEventListener('click',   () => { if (borderWidthIdx > 0) { borderWidthIdx--; applyBorderStyle(); } });
+        document.getElementById('borderIncBtn').addEventListener('click',   () => { if (borderWidthIdx < BORDER_WIDTHS.length-1) { borderWidthIdx++; applyBorderStyle(); } });
+        document.getElementById('borderColorPicker').addEventListener('input', (e) => { borderColor = e.target.value; applyBorderStyle(); });
+
+        // 收合設定面板
+        document.getElementById('toggleSettingsBtn').addEventListener('click', () => {
+            const panel   = document.getElementById('settingsPanel');
+            const arrow   = document.getElementById('toggleArrow');
+            const label   = document.getElementById('toggleLabel');
+            const visible = !panel.classList.contains('hidden');
+            panel.classList.toggle('hidden', visible);
+            arrow.style.transform = visible ? 'rotate(-90deg)' : '';
+            label.textContent     = visible ? '展開設定' : '收合設定';
+        });
+    </script>
+</body>
+</html>
