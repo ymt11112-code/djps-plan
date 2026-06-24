@@ -673,12 +673,21 @@ td p,td div,td li,td span,th p,th div,th li,th span{line-height:${lh} !important
                                 indexLetterCells.push(cell);
                                 indexLetterCols.add(col);
                             }
-                            for (let c = col; c < Math.min(col + cs, maxCols); c++) indexRsLeft[c] = Math.max(indexRsLeft[c], rs);
-                            col += cs;
+                            const effectiveCs = cell.colSpan || cs;
+                            for (let c = col; c < Math.min(col + effectiveCs, maxCols); c++) indexRsLeft[c] = Math.max(indexRsLeft[c], rs);
+                            col += effectiveCs;
                         }
                     }
                     if (indexLetterCols.size >= 3) {
-                        indexLetterCells.forEach(cell => cell.classList.add('theme-index-letter-cell'));
+                        indexLetterCells.forEach(cell => {
+                            cell.classList.add('theme-index-letter-cell');
+                            const extraSpan = (cell.colSpan || 1) - 1;
+                            if (extraSpan > 0) {
+                                cell.colSpan = 1;
+                                const next = cell.nextElementSibling;
+                                if (next) next.colSpan = (next.colSpan || 1) + extraSpan;
+                            }
+                        });
                     } else {
                         indexLetterCols.clear();
                     }
